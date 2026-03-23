@@ -2,82 +2,97 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>TODO</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: #0d1117;
     color: #e6edf3;
-    padding: 16px;
-    padding-bottom: 80px;
+    padding: 0 16px 100px;
     line-height: 1.6;
+    overflow-x: hidden;
   }
+
+  /* Header */
   .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
+    position: sticky; top: 0; z-index: 10;
+    background: #0d1117;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0 8px;
     border-bottom: 1px solid #30363d;
   }
   .header h1 { font-size: 20px; font-weight: 600; }
-  .sync-info {
-    font-size: 12px;
-    color: #8b949e;
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .sync-info { font-size: 12px; color: #8b949e; }
+  .settings-btn {
+    background: none; border: none; color: #8b949e; font-size: 18px; cursor: pointer; padding: 4px;
   }
-  .section {
-    margin-bottom: 20px;
-  }
-  .section-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: #58a6ff;
-    margin-bottom: 8px;
-    padding: 4px 8px;
+  .settings-btn:hover { color: #e6edf3; }
+
+  /* Tabs */
+  .tabs {
+    display: flex; gap: 0;
+    margin: 12px 0;
     background: #161b22;
-    border-radius: 6px;
+    border-radius: 8px;
+    overflow: hidden;
   }
+  .tab {
+    flex: 1; padding: 10px 0; text-align: center;
+    font-size: 14px; font-weight: 500;
+    color: #8b949e; background: transparent;
+    border: none; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab.active { color: #e6edf3; background: #30363d; }
+  .tab-badge {
+    display: inline-block; min-width: 18px; height: 18px;
+    padding: 0 5px; margin-left: 4px;
+    border-radius: 9px; font-size: 11px; line-height: 18px;
+    background: #30363d; color: #8b949e; text-align: center;
+  }
+  .tab.active .tab-badge { background: #58a6ff; color: #fff; }
+
+  /* Section */
+  .section { margin-bottom: 16px; }
+  .section-title {
+    font-size: 15px; font-weight: 600; color: #58a6ff;
+    margin-bottom: 8px; padding: 4px 8px;
+    background: #161b22; border-radius: 6px;
+  }
+
+  /* Item */
   .item {
     padding: 10px 12px;
     border-bottom: 1px solid #21262d;
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
+    transition: background 0.15s;
   }
   .item:last-child { border-bottom: none; }
+  .item:active { background: rgba(88,166,255,0.06); }
+  .item-row {
+    display: flex; align-items: flex-start; gap: 10px;
+  }
   .checkbox {
-    width: 18px;
-    height: 18px;
-    border: 2px solid #30363d;
-    border-radius: 4px;
-    flex-shrink: 0;
-    margin-top: 2px;
+    width: 22px; height: 22px;
+    border: 2px solid #30363d; border-radius: 6px;
+    flex-shrink: 0; margin-top: 1px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    color: transparent; font-size: 14px;
   }
-  .checkbox.done {
-    background: #238636;
-    border-color: #238636;
-  }
-  .item-content { flex: 1; min-width: 0; }
-  .item-title {
-    font-size: 14px;
-    word-break: break-word;
-  }
+  .checkbox:active { transform: scale(0.9); }
+  .checkbox.done { background: #238636; border-color: #238636; color: #fff; }
+  .item-content { flex: 1; min-width: 0; cursor: pointer; }
+  .item-title { font-size: 14px; word-break: break-word; }
   .item-meta {
-    font-size: 12px;
-    color: #8b949e;
-    margin-top: 2px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    font-size: 12px; color: #8b949e;
+    margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap;
   }
   .tag {
-    display: inline-block;
-    padding: 0 6px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 500;
+    display: inline-block; padding: 0 6px;
+    border-radius: 10px; font-size: 11px; font-weight: 500;
   }
   .tag-id { color: #8b949e; }
   .tag-high { background: #da3633; color: #fff; }
@@ -86,107 +101,335 @@
   .dday { color: #f85149; font-weight: 600; }
   .dday.safe { color: #3fb950; }
   .dday.near { color: #d29922; }
-  .blocker {
-    font-size: 12px;
-    color: #f0883e;
-    margin-top: 2px;
+  .overdue { background: rgba(248,81,73,0.06); }
+
+  /* Detail panel */
+  .item-detail {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.25s ease, padding 0.25s ease;
+    padding: 0 0 0 32px;
   }
-  .refresh-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: #238636;
-    border: none;
-    color: #fff;
-    font-size: 20px;
+  .item-detail.open {
+    max-height: 200px;
+    padding: 8px 0 4px 32px;
+  }
+  .detail-row {
+    display: flex; gap: 8px; font-size: 13px;
+    padding: 3px 0; color: #8b949e;
+  }
+  .detail-label { color: #58a6ff; min-width: 52px; }
+  .detail-value { color: #e6edf3; }
+  .blocker-detail { color: #f0883e; }
+
+  /* Bottom sheet */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100; opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  .overlay.show { opacity: 1; pointer-events: auto; }
+  .bottom-sheet {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #161b22;
+    border-radius: 16px 16px 0 0;
+    z-index: 101;
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+    padding: 8px 0 env(safe-area-inset-bottom, 20px);
+  }
+  .bottom-sheet.show { transform: translateY(0); }
+  .sheet-handle {
+    width: 36px; height: 4px;
+    background: #30363d; border-radius: 2px;
+    margin: 8px auto 12px;
+  }
+  .sheet-title {
+    font-size: 13px; color: #8b949e;
+    padding: 0 20px 8px;
+    border-bottom: 1px solid #21262d;
+  }
+  .sheet-action {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px;
+    font-size: 15px; color: #e6edf3;
+    border: none; background: none;
+    width: 100%; text-align: left;
     cursor: pointer;
+  }
+  .sheet-action:active { background: #21262d; }
+  .sheet-action.danger { color: #f85149; }
+  .sheet-action .icon { font-size: 18px; width: 24px; text-align: center; }
+
+  /* Urgency picker */
+  .urgency-picker {
+    display: none; padding: 8px 20px; gap: 8px;
+  }
+  .urgency-picker.show { display: flex; }
+  .urgency-opt {
+    flex: 1; padding: 10px; text-align: center;
+    border-radius: 8px; border: 2px solid #30363d;
+    background: none; color: #e6edf3;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .urgency-opt:active { opacity: 0.7; }
+  .urgency-opt[data-u="상"] { border-color: #da3633; color: #da3633; }
+  .urgency-opt[data-u="중"] { border-color: #d29922; color: #d29922; }
+  .urgency-opt[data-u="하"] { border-color: #8b949e; color: #8b949e; }
+  .urgency-opt.selected { color: #fff !important; }
+  .urgency-opt[data-u="상"].selected { background: #da3633; }
+  .urgency-opt[data-u="중"].selected { background: #d29922; }
+  .urgency-opt[data-u="하"].selected { background: #30363d; }
+
+  /* Modal */
+  .modal {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200; display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal.show { display: flex; }
+  .modal-box {
+    background: #161b22; border-radius: 12px;
+    width: 100%; max-width: 360px;
+    padding: 20px;
+  }
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+  .modal-input {
+    width: 100%; padding: 10px 12px;
+    background: #0d1117; border: 1px solid #30363d;
+    border-radius: 8px; color: #e6edf3; font-size: 14px;
+    margin-bottom: 12px;
+  }
+  .modal-input:focus { outline: none; border-color: #58a6ff; }
+  .modal-hint { font-size: 12px; color: #8b949e; margin-bottom: 16px; line-height: 1.5; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal-btn {
+    padding: 8px 16px; border-radius: 8px;
+    font-size: 14px; cursor: pointer; border: none;
+  }
+  .modal-btn.cancel { background: #21262d; color: #e6edf3; }
+  .modal-btn.primary { background: #238636; color: #fff; }
+  .modal-btn:active { opacity: 0.8; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 80px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #30363d; color: #e6edf3;
+    padding: 10px 20px; border-radius: 8px;
+    font-size: 13px; z-index: 300;
+    opacity: 0; transition: all 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { background: #da3633; }
+  .toast.success { background: #238636; }
+
+  /* Refresh */
+  .refresh-btn {
+    position: fixed; bottom: 20px; right: 20px;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: #238636; border: none; color: #fff;
+    font-size: 20px; cursor: pointer;
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 50;
   }
   .refresh-btn:active { background: #2ea043; }
   .refresh-btn.loading { animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .empty { color: #8b949e; text-align: center; padding: 40px; }
-  .overdue { background: rgba(248,81,73,0.08); }
+
+  .empty { color: #8b949e; text-align: center; padding: 40px; font-size: 14px; }
+
+  /* Token status dot */
+  .token-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    display: inline-block; margin-left: 4px;
+  }
+  .token-dot.ok { background: #3fb950; }
+  .token-dot.none { background: #f85149; }
+
+  /* Loading */
+  .item.saving { opacity: 0.5; pointer-events: none; }
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>TODO</h1>
-  <div class="sync-info" id="syncInfo">loading...</div>
+  <div class="header-right">
+    <span class="sync-info" id="syncInfo">loading...</span>
+    <button class="settings-btn" onclick="showTokenModal()" title="Settings">
+      &#9881;<span class="token-dot" id="tokenDot"></span>
+    </button>
+  </div>
 </div>
+
+<div class="tabs">
+  <button class="tab active" id="tabActive" onclick="switchTab('active')">
+    활성 <span class="tab-badge" id="badgeActive">0</span>
+  </button>
+  <button class="tab" id="tabArchive" onclick="switchTab('archive')">
+    완료 <span class="tab-badge" id="badgeArchive">0</span>
+  </button>
+</div>
+
 <div id="content"><div class="empty">loading...</div></div>
+
 <button class="refresh-btn" id="refreshBtn" onclick="load()">&#x21bb;</button>
 
-<script>
-const RAW_URL = 'https://raw.githubusercontent.com/hanssam88/todo/main/todo_active.md';
-const AUTO_REFRESH = 30000; // 30s
+<!-- Bottom Sheet -->
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="bottom-sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="sheetTitle">T-001</div>
+  <button class="sheet-action" onclick="doAction('complete')">
+    <span class="icon">&#10003;</span> 완료 처리
+  </button>
+  <button class="sheet-action" onclick="toggleUrgencyPicker()">
+    <span class="icon">&#9650;</span> 긴급도 변경
+  </button>
+  <div class="urgency-picker" id="urgencyPicker">
+    <button class="urgency-opt" data-u="상" onclick="doAction('urgency','상')">상</button>
+    <button class="urgency-opt" data-u="중" onclick="doAction('urgency','중')">중</button>
+    <button class="urgency-opt" data-u="하" onclick="doAction('urgency','하')">하</button>
+  </div>
+  <button class="sheet-action danger" onclick="doAction('cancel')">
+    <span class="icon">&#10005;</span> 취소 (삭제)
+  </button>
+</div>
 
-function calcDday(dateStr) {
-  if (!dateStr || dateStr === '-') return null;
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const target = new Date(dateStr);
-  target.setHours(0,0,0,0);
-  const diff = Math.round((target - today) / 86400000);
-  return diff;
+<!-- Token Modal -->
+<div class="modal" id="tokenModal">
+  <div class="modal-box">
+    <div class="modal-title">GitHub Token 설정</div>
+    <div class="modal-hint">
+      GitHub &gt; Settings &gt; Developer settings &gt; Personal access tokens &gt; Fine-grained tokens<br>
+      Repository: <b>hanssam88/todo</b><br>
+      Permission: <b>Contents (Read and write)</b>
+    </div>
+    <input class="modal-input" id="tokenInput" type="password" placeholder="github_pat_..." />
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeTokenModal()">취소</button>
+      <button class="modal-btn primary" onclick="saveToken()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+const OWNER = 'hanssam88';
+const REPO = 'todo';
+const ACTIVE_PATH = 'todo_active.md';
+const ARCHIVE_PATH = 'todo_archive.md';
+const RAW_BASE = `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/`;
+const API_BASE = `https://api.github.com/repos/${OWNER}/${REPO}/contents/`;
+const AUTO_REFRESH = 30000;
+
+let currentTab = 'active';
+let activeData = { raw: '', sections: [], count: 0 };
+let archiveData = { raw: '', sections: [], count: 0 };
+let selectedItem = null;
+
+// Token
+function getToken() { return localStorage.getItem('gh_todo_token') || ''; }
+function hasToken() { return !!getToken(); }
+
+function updateTokenDot() {
+  const dot = document.getElementById('tokenDot');
+  dot.className = 'token-dot ' + (hasToken() ? 'ok' : 'none');
 }
 
+function showTokenModal() {
+  document.getElementById('tokenInput').value = getToken();
+  document.getElementById('tokenModal').classList.add('show');
+}
+
+function closeTokenModal() {
+  document.getElementById('tokenModal').classList.remove('show');
+}
+
+function saveToken() {
+  const v = document.getElementById('tokenInput').value.trim();
+  if (v) localStorage.setItem('gh_todo_token', v);
+  else localStorage.removeItem('gh_todo_token');
+  closeTokenModal();
+  updateTokenDot();
+  toast(v ? 'Token 저장됨' : 'Token 삭제됨', 'success');
+}
+
+// Toast
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast ' + (type || '') + ' show';
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// Tabs
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabActive').classList.toggle('active', tab === 'active');
+  document.getElementById('tabArchive').classList.toggle('active', tab === 'archive');
+  renderCurrent();
+}
+
+// Parse
+function parseMd(text) {
+  const sections = [];
+  let current = null;
+  let count = 0;
+  for (const line of text.split('\n')) {
+    const sm = line.match(/^## (.+)/);
+    if (sm) { current = { title: sm[1], items: [] }; sections.push(current); continue; }
+    if (!current) continue;
+    const im = line.match(/^- \[([ x])\] `(T-\d+)` `(\S+)` `(\S+)` (.+)/);
+    if (im) {
+      const [, done, id, urgency, date, rest] = im;
+      const bm = rest.match(/^(.+?)\s*\u2014\s*(.+)$/);
+      const title = bm ? bm[1].trim() : rest.trim();
+      const blocker = bm ? bm[2].trim() : null;
+      current.items.push({ done: done === 'x', id, urgency, date, title, blocker, raw: line });
+      count++;
+    }
+  }
+  return { sections: sections.filter(s => s.items.length > 0), count };
+}
+
+// D-day
+function calcDday(ds) {
+  if (!ds || ds === '-') return null;
+  const t = new Date(); t.setHours(0,0,0,0);
+  const d = new Date(ds); d.setHours(0,0,0,0);
+  return Math.round((d - t) / 86400000);
+}
 function ddayText(d) {
   if (d === null) return '';
   if (d === 0) return 'D-Day';
-  if (d < 0) return `D+${Math.abs(d)}`;
-  return `D-${d}`;
+  return d < 0 ? `D+${Math.abs(d)}` : `D-${d}`;
 }
-
 function ddayClass(d) {
   if (d === null) return '';
   if (d <= 0) return 'dday';
   if (d <= 3) return 'dday near';
   return 'dday safe';
 }
-
 function urgencyTag(u) {
-  const map = { '\uC0C1': 'tag-high', '\uC911': 'tag-mid', '\uD558': 'tag-low' };
-  return map[u] || 'tag-low';
+  return { '\uC0C1': 'tag-high', '\uC911': 'tag-mid', '\uD558': 'tag-low' }[u] || 'tag-low';
 }
-
-function parseMd(text) {
-  const sections = [];
-  let current = null;
-
-  for (const line of text.split('\n')) {
-    const sectionMatch = line.match(/^## (.+)/);
-    if (sectionMatch) {
-      current = { title: sectionMatch[1], items: [] };
-      sections.push(current);
-      continue;
-    }
-
-    if (!current) continue;
-    const itemMatch = line.match(/^- \[([ x])\] `(T-\d+)` `(\S+)` `(\S+)` (.+)/);
-    if (itemMatch) {
-      const [, done, id, urgency, date, rest] = itemMatch;
-      const blockerMatch = rest.match(/^(.+?)\s*\u2014\s*(.+)$/);
-      const title = blockerMatch ? blockerMatch[1] : rest;
-      const blocker = blockerMatch ? blockerMatch[2] : null;
-      current.items.push({ done: done === 'x', id, urgency, date, title: title.trim(), blocker });
-    }
-  }
-
-  return sections.filter(s => s.items.length > 0);
+function urgencyLabel(u) {
+  return { '\uC0C1': '긴급', '\uC911': '보통', '\uD558': '낮음' }[u] || u;
 }
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-function render(sections) {
-  if (!sections.length) {
-    return '<div class="empty">no items</div>';
-  }
+// Render
+function renderSections(sections, isArchive) {
+  if (!sections.length) return `<div class="empty">${isArchive ? '완료된 항목이 없습니다' : '할 일이 없습니다'}</div>`;
 
   return sections.map(s => {
     const items = s.items.map(item => {
@@ -194,49 +437,260 @@ function render(sections) {
       const dateDisplay = item.date === '-' ? 'backlog' : item.date.slice(5);
       const isOverdue = d !== null && d < 0 && !item.done;
 
-      return `<div class="item${isOverdue ? ' overdue' : ''}">
-        <div class="checkbox${item.done ? ' done' : ''}"></div>
-        <div class="item-content">
-          <div class="item-title">${esc(item.title)}</div>
-          <div class="item-meta">
-            <span class="tag tag-id">${item.id}</span>
-            <span class="tag ${urgencyTag(item.urgency)}">${esc(item.urgency)}</span>
-            <span>${dateDisplay}</span>
-            ${d !== null ? `<span class="${ddayClass(d)}">${ddayText(d)}</span>` : ''}
+      return `<div class="item${isOverdue ? ' overdue' : ''}" data-id="${item.id}">
+        <div class="item-row">
+          <div class="checkbox${item.done ? ' done' : ''}" onclick="onCheckbox(event,'${item.id}')">${item.done ? '&#10003;' : ''}</div>
+          <div class="item-content" onclick="toggleDetail('${item.id}')">
+            <div class="item-title">${esc(item.title)}</div>
+            <div class="item-meta">
+              <span class="tag tag-id">${item.id}</span>
+              <span class="tag ${urgencyTag(item.urgency)}">${esc(item.urgency)}</span>
+              <span>${dateDisplay}</span>
+              ${d !== null ? `<span class="${ddayClass(d)}">${ddayText(d)}</span>` : ''}
+            </div>
           </div>
-          ${item.blocker ? `<div class="blocker">\u26a0 ${esc(item.blocker)}</div>` : ''}
+        </div>
+        <div class="item-detail" id="detail-${item.id}">
+          <div class="detail-row"><span class="detail-label">ID</span><span class="detail-value">${item.id}</span></div>
+          <div class="detail-row"><span class="detail-label">긴급도</span><span class="detail-value">${urgencyLabel(item.urgency)}</span></div>
+          <div class="detail-row"><span class="detail-label">기한</span><span class="detail-value">${item.date === '-' ? '백로그' : item.date}${d !== null ? ` (${ddayText(d)})` : ''}</span></div>
+          <div class="detail-row"><span class="detail-label">섹션</span><span class="detail-value">${esc(s.title)}</span></div>
+          ${item.blocker ? `<div class="detail-row"><span class="detail-label blocker-detail">블로커</span><span class="detail-value blocker-detail">${esc(item.blocker)}</span></div>` : ''}
         </div>
       </div>`;
     }).join('');
 
-    return `<div class="section">
-      <div class="section-title">${esc(s.title)}</div>
-      ${items}
-    </div>`;
+    return `<div class="section"><div class="section-title">${esc(s.title)}</div>${items}</div>`;
   }).join('');
 }
 
-function esc(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+function renderCurrent() {
+  const data = currentTab === 'active' ? activeData : archiveData;
+  document.getElementById('content').innerHTML = renderSections(data.sections, currentTab === 'archive');
 }
 
+// Detail toggle
+function toggleDetail(id) {
+  const el = document.getElementById('detail-' + id);
+  if (el) el.classList.toggle('open');
+}
+
+// Checkbox → action sheet
+function onCheckbox(e, id) {
+  e.stopPropagation();
+  if (!hasToken()) { showTokenModal(); toast('먼저 GitHub Token을 설정하세요', 'error'); return; }
+  if (currentTab === 'archive') return;
+  selectedItem = id;
+  document.getElementById('sheetTitle').textContent = id;
+  document.getElementById('urgencyPicker').classList.remove('show');
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('sheet').classList.add('show');
+}
+
+function closeSheet() {
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('sheet').classList.remove('show');
+  selectedItem = null;
+}
+
+function toggleUrgencyPicker() {
+  const p = document.getElementById('urgencyPicker');
+  p.classList.toggle('show');
+  if (p.classList.contains('show')) {
+    const item = findItem(selectedItem);
+    document.querySelectorAll('.urgency-opt').forEach(b => {
+      b.classList.toggle('selected', item && b.dataset.u === item.urgency);
+    });
+  }
+}
+
+function findItem(id) {
+  for (const s of activeData.sections)
+    for (const item of s.items)
+      if (item.id === id) return item;
+  return null;
+}
+
+// GitHub API
+async function getFile(path) {
+  const res = await fetch(API_BASE + path, {
+    headers: { 'Authorization': 'Bearer ' + getToken(), 'Accept': 'application/vnd.github.v3+json' }
+  });
+  if (!res.ok) throw new Error('API error: ' + res.status);
+  return res.json();
+}
+
+async function updateFile(path, content, sha, message) {
+  const res = await fetch(API_BASE + path, {
+    method: 'PUT',
+    headers: {
+      'Authorization': 'Bearer ' + getToken(),
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      message,
+      content: btoa(unescape(encodeURIComponent(content))),
+      sha
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Update failed: ' + res.status);
+  }
+  return res.json();
+}
+
+// Actions
+async function doAction(action, value) {
+  if (!selectedItem) return;
+  const id = selectedItem;
+  closeSheet();
+
+  const itemEl = document.querySelector(`.item[data-id="${id}"]`);
+  if (itemEl) itemEl.classList.add('saving');
+
+  try {
+    if (action === 'complete') {
+      await completeItem(id);
+      toast(`${id} 완료 처리됨`, 'success');
+    } else if (action === 'cancel') {
+      await cancelItem(id);
+      toast(`${id} 취소됨`, 'success');
+    } else if (action === 'urgency') {
+      await changeUrgency(id, value);
+      toast(`${id} 긴급도 → ${value}`, 'success');
+    }
+    await load();
+  } catch (err) {
+    toast('오류: ' + err.message, 'error');
+    if (itemEl) itemEl.classList.remove('saving');
+  }
+}
+
+async function completeItem(id) {
+  const [activeFile, archiveFile] = await Promise.all([getFile(ACTIVE_PATH), getFile(ARCHIVE_PATH)]);
+  const activeContent = decodeContent(activeFile.content);
+  const archiveContent = decodeContent(archiveFile.content);
+
+  const lines = activeContent.split('\n');
+  let removedLine = null;
+  const newLines = lines.filter(line => {
+    if (line.includes('`' + id + '`')) { removedLine = line; return false; }
+    return true;
+  });
+
+  if (!removedLine) throw new Error('항목을 찾을 수 없습니다');
+
+  const completedLine = removedLine.replace('- [ ]', '- [x]');
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const newArchive = appendToArchive(archiveContent, monthKey, completedLine);
+
+  await updateFile(ACTIVE_PATH, cleanEmptySections(newLines.join('\n')), activeFile.sha, `done: ${id}`);
+  const archiveFile2 = await getFile(ARCHIVE_PATH);
+  await updateFile(ARCHIVE_PATH, newArchive, archiveFile2.sha, `archive: ${id} 완료`);
+}
+
+async function cancelItem(id) {
+  const [activeFile, archiveFile] = await Promise.all([getFile(ACTIVE_PATH), getFile(ARCHIVE_PATH)]);
+  const activeContent = decodeContent(activeFile.content);
+  const archiveContent = decodeContent(archiveFile.content);
+
+  const lines = activeContent.split('\n');
+  let removedLine = null;
+  const newLines = lines.filter(line => {
+    if (line.includes('`' + id + '`')) { removedLine = line; return false; }
+    return true;
+  });
+
+  if (!removedLine) throw new Error('항목을 찾을 수 없습니다');
+
+  const cancelledLine = removedLine.replace(/(.+)/, '$1 (취소)');
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const newArchive = appendToArchive(archiveContent, monthKey, cancelledLine);
+
+  await updateFile(ACTIVE_PATH, cleanEmptySections(newLines.join('\n')), activeFile.sha, `cancel: ${id}`);
+  const archiveFile2 = await getFile(ARCHIVE_PATH);
+  await updateFile(ARCHIVE_PATH, newArchive, archiveFile2.sha, `archive: ${id} 취소`);
+}
+
+async function changeUrgency(id, newUrgency) {
+  const file = await getFile(ACTIVE_PATH);
+  const content = decodeContent(file.content);
+  const lines = content.split('\n');
+  const newLines = lines.map(line => {
+    if (line.includes('`' + id + '`')) {
+      return line.replace(/`[상중하]`/, '`' + newUrgency + '`');
+    }
+    return line;
+  });
+  await updateFile(ACTIVE_PATH, newLines.join('\n'), file.sha, `urgency: ${id} → ${newUrgency}`);
+}
+
+function decodeContent(b64) {
+  return decodeURIComponent(escape(atob(b64.replace(/\n/g, ''))));
+}
+
+function appendToArchive(archiveContent, monthKey, line) {
+  const header = `## ${monthKey}`;
+  if (archiveContent.includes(header)) {
+    return archiveContent.replace(header, header + '\n' + line);
+  }
+  return archiveContent.trimEnd() + '\n\n' + header + '\n' + line + '\n';
+}
+
+function cleanEmptySections(text) {
+  const lines = text.split('\n');
+  const result = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].startsWith('## ')) {
+      let hasItems = false;
+      for (let j = i + 1; j < lines.length; j++) {
+        if (lines[j].startsWith('## ')) break;
+        if (lines[j].startsWith('- [')) { hasItems = true; break; }
+      }
+      if (!hasItems) {
+        while (i + 1 < lines.length && !lines[i + 1].startsWith('## ') && !lines[i + 1].startsWith('# ')) i++;
+        continue;
+      }
+    }
+    result.push(lines[i]);
+  }
+  return result.join('\n');
+}
+
+// Load
 async function load() {
   const btn = document.getElementById('refreshBtn');
   btn.classList.add('loading');
   try {
-    const res = await fetch(RAW_URL + '?t=' + Date.now());
-    const text = await res.text();
-    const sections = parseMd(text);
-    document.getElementById('content').innerHTML = render(sections);
-    document.getElementById('syncInfo').textContent = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + ' updated';
+    const [activeRes, archiveRes] = await Promise.all([
+      fetch(RAW_BASE + ACTIVE_PATH + '?t=' + Date.now()),
+      fetch(RAW_BASE + ARCHIVE_PATH + '?t=' + Date.now())
+    ]);
+    const activeText = await activeRes.text();
+    const archiveText = await archiveRes.text();
+
+    const ap = parseMd(activeText);
+    activeData = { raw: activeText, sections: ap.sections, count: ap.count };
+    const arp = parseMd(archiveText);
+    archiveData = { raw: archiveText, sections: arp.sections, count: arp.count };
+
+    document.getElementById('badgeActive').textContent = ap.count;
+    document.getElementById('badgeArchive').textContent = arp.count;
+
+    renderCurrent();
+    document.getElementById('syncInfo').textContent = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
   } catch (e) {
     document.getElementById('syncInfo').textContent = 'offline';
   }
   btn.classList.remove('loading');
 }
 
+// Init
+updateTokenDot();
 load();
 setInterval(load, AUTO_REFRESH);
 </script>
