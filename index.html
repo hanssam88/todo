@@ -328,7 +328,7 @@ const REPO = 'todo';
 const ACTIVE_PATH = 'todo_active.md';
 const ARCHIVE_PATH = 'todo_archive.md';
 const API_BASE = `https://api.github.com/repos/${OWNER}/${REPO}/contents/`;
-const AUTO_REFRESH = 30000;
+const AUTO_REFRESH = hasToken() ? 30000 : 120000;
 
 let currentTab = 'active';
 let activeData = { raw: '', sections: [], count: 0 };
@@ -660,18 +660,17 @@ function cleanEmptySections(text) {
   return result.join('\n');
 }
 
-// Load via GitHub API (no CDN cache), fallback to raw CDN if no token
+// Load: API first (real-time), CDN fallback (if rate-limited)
 const RAW_BASE = `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/`;
 
 async function fetchRaw(path) {
   const token = getToken();
-  if (token) {
-    const res = await fetch(API_BASE + path + '?t=' + Date.now(), {
-      headers: { 'Accept': 'application/vnd.github.v3.raw', 'Authorization': 'Bearer ' + token }
-    });
-    if (!res.ok) throw new Error('API error: ' + res.status);
-    return res.text();
-  }
+  const headers = { 'Accept': 'application/vnd.github.v3.raw' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  try {
+    const res = await fetch(API_BASE + path + '?t=' + Date.now(), { headers });
+    if (res.ok) return res.text();
+  } catch (e) { /* fallback */ }
   const res = await fetch(RAW_BASE + path + '?t=' + Date.now());
   if (!res.ok) throw new Error('Fetch error: ' + res.status);
   return res.text();
