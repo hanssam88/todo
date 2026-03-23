@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TODO</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    padding: 16px;
+    padding-bottom: 80px;
+    line-height: 1.6;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #30363d;
+  }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .sync-info {
+    font-size: 12px;
+    color: #8b949e;
+  }
+  .section {
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #58a6ff;
+    margin-bottom: 8px;
+    padding: 4px 8px;
+    background: #161b22;
+    border-radius: 6px;
+  }
+  .item {
+    padding: 10px 12px;
+    border-bottom: 1px solid #21262d;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .item:last-child { border-bottom: none; }
+  .checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #30363d;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .checkbox.done {
+    background: #238636;
+    border-color: #238636;
+  }
+  .item-content { flex: 1; min-width: 0; }
+  .item-title {
+    font-size: 14px;
+    word-break: break-word;
+  }
+  .item-meta {
+    font-size: 12px;
+    color: #8b949e;
+    margin-top: 2px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .tag {
+    display: inline-block;
+    padding: 0 6px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .tag-id { color: #8b949e; }
+  .tag-high { background: #da3633; color: #fff; }
+  .tag-mid { background: #d29922; color: #fff; }
+  .tag-low { background: #30363d; color: #8b949e; }
+  .dday { color: #f85149; font-weight: 600; }
+  .dday.safe { color: #3fb950; }
+  .dday.near { color: #d29922; }
+  .blocker {
+    font-size: 12px;
+    color: #f0883e;
+    margin-top: 2px;
+  }
+  .refresh-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #238636;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .refresh-btn:active { background: #2ea043; }
+  .refresh-btn.loading { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty { color: #8b949e; text-align: center; padding: 40px; }
+  .overdue { background: rgba(248,81,73,0.08); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>TODO</h1>
+  <div class="sync-info" id="syncInfo">loading...</div>
+</div>
+<div id="content"><div class="empty">loading...</div></div>
+<button class="refresh-btn" id="refreshBtn" onclick="load()">&#x21bb;</button>
+
+<script>
+const RAW_URL = 'https://raw.githubusercontent.com/hanssam88/todo/main/todo_active.md';
+const AUTO_REFRESH = 30000; // 30s
+
+function calcDday(dateStr) {
+  if (!dateStr || dateStr === '-') return null;
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  const target = new Date(dateStr);
+  target.setHours(0,0,0,0);
+  const diff = Math.round((target - today) / 86400000);
+  return diff;
+}
+
+function ddayText(d) {
+  if (d === null) return '';
+  if (d === 0) return 'D-Day';
+  if (d < 0) return `D+${Math.abs(d)}`;
+  return `D-${d}`;
+}
+
+function ddayClass(d) {
+  if (d === null) return '';
+  if (d <= 0) return 'dday';
+  if (d <= 3) return 'dday near';
+  return 'dday safe';
+}
+
+function urgencyTag(u) {
+  const map = { '\uC0C1': 'tag-high', '\uC911': 'tag-mid', '\uD558': 'tag-low' };
+  return map[u] || 'tag-low';
+}
+
+function parseMd(text) {
+  const sections = [];
+  let current = null;
+
+  for (const line of text.split('\n')) {
+    const sectionMatch = line.match(/^## (.+)/);
+    if (sectionMatch) {
+      current = { title: sectionMatch[1], items: [] };
+      sections.push(current);
+      continue;
+    }
+
+    if (!current) continue;
+    const itemMatch = line.match(/^- \[([ x])\] `(T-\d+)` `(\S+)` `(\S+)` (.+)/);
+    if (itemMatch) {
+      const [, done, id, urgency, date, rest] = itemMatch;
+      const blockerMatch = rest.match(/^(.+?)\s*\u2014\s*(.+)$/);
+      const title = blockerMatch ? blockerMatch[1] : rest;
+      const blocker = blockerMatch ? blockerMatch[2] : null;
+      current.items.push({ done: done === 'x', id, urgency, date, title: title.trim(), blocker });
+    }
+  }
+
+  return sections.filter(s => s.items.length > 0);
+}
+
+function render(sections) {
+  if (!sections.length) {
+    return '<div class="empty">no items</div>';
+  }
+
+  return sections.map(s => {
+    const items = s.items.map(item => {
+      const d = calcDday(item.date);
+      const dateDisplay = item.date === '-' ? 'backlog' : item.date.slice(5);
+      const isOverdue = d !== null && d < 0 && !item.done;
+
+      return `<div class="item${isOverdue ? ' overdue' : ''}">
+        <div class="checkbox${item.done ? ' done' : ''}"></div>
+        <div class="item-content">
+          <div class="item-title">${esc(item.title)}</div>
+          <div class="item-meta">
+            <span class="tag tag-id">${item.id}</span>
+            <span class="tag ${urgencyTag(item.urgency)}">${esc(item.urgency)}</span>
+            <span>${dateDisplay}</span>
+            ${d !== null ? `<span class="${ddayClass(d)}">${ddayText(d)}</span>` : ''}
+          </div>
+          ${item.blocker ? `<div class="blocker">\u26a0 ${esc(item.blocker)}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="section">
+      <div class="section-title">${esc(s.title)}</div>
+      ${items}
+    </div>`;
+  }).join('');
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+async function load() {
+  const btn = document.getElementById('refreshBtn');
+  btn.classList.add('loading');
+  try {
+    const res = await fetch(RAW_URL + '?t=' + Date.now());
+    const text = await res.text();
+    const sections = parseMd(text);
+    document.getElementById('content').innerHTML = render(sections);
+    document.getElementById('syncInfo').textContent = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) + ' updated';
+  } catch (e) {
+    document.getElementById('syncInfo').textContent = 'offline';
+  }
+  btn.classList.remove('loading');
+}
+
+load();
+setInterval(load, AUTO_REFRESH);
+</script>
+</body>
+</html>
