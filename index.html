@@ -375,16 +375,16 @@ async function saveToken() {
     const data = await res.json();
     if (!data.sha) { toast('예상치 못한 응답', 'error'); return; }
 
-    // 2. 쓰기 권한 확인 (동일 내용 PUT)
-    const writeRes = await fetch(API_BASE + ACTIVE_PATH, {
-      method: 'PUT',
-      headers: { 'Authorization': `${prefix} ${v}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: 'chore: token permission verified', content: data.content.replace(/\n/g, ''), sha: data.sha })
+    // 2. 쓰기 권한 확인 (repo collaborator permission 체크, 커밋 안 만듦)
+    const permRes = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`, {
+      headers: { 'Authorization': `${prefix} ${v}`, 'Accept': 'application/vnd.github.v3+json' }
     });
-    if (!writeRes.ok) {
-      const err = await writeRes.json().catch(() => ({}));
-      toast('쓰기 권한 없음: Contents → Read and write 필요', 'error');
-      return;
+    if (permRes.ok) {
+      const repo = await permRes.json();
+      const canWrite = repo.permissions && (repo.permissions.push || repo.permissions.admin);
+      if (!canWrite) { toast('쓰기 권한 없음: Contents → Read and write 필요', 'error'); return; }
+    } else {
+      toast('권한 확인 실패: ' + permRes.status, 'error'); return;
     }
     localStorage.setItem('gh_todo_token', v);
     closeTokenModal();
