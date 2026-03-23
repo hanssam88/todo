@@ -17,7 +17,7 @@
 
 ## 공통
 - [ ] `T-006` `상` `2026-03-27` 태국 출장 항공권+숙소 예산 승인 받기
-- [ ] `T-016` `중` `2026-03-30` Slack 멘션 자동 응답 봇 개발 — 멘션 감지→컨텍스트 수집→Claude API 초안→DM 승인/수정/거절 플로우
+- [ ] `T-016` `중` `2026-03-30` Slack 멘션 자동 응답 봇 개발 — 🚧 BLOCKER: 슬랙 워크스페이스 관리자 앱 설치 승인 대기 중. 승인 완료 후: ①api.slack.com/apps→앱 선택 ②Settings→Install App ③Bot User OAuth Token(xoxb-...) 복사 ④.env에 붙여넣기 → `python -m src.bot` 실행. 코드 구현 완료(30 tests pass), 위치: GGT/slack-auto-reply/
 - [ ] `T-018` `중` `2026-03-27` YGG Outlook 메일 Gmail 이전 — POP 가져오기 또는 PST→GSMMO 방식, 참고: sotheb.co.kr/Google/346
 - [ ] `T-004` `하` `-` DataTable 가상화 검토 (react-window)
 - [ ] `T-017` `하` `2026-06-23` TODO 웹 UI 개발 — 웹에서 TODO 조회/수정/상세 내용 편집 기능
