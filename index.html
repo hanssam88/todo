@@ -327,7 +327,6 @@ const OWNER = 'hanssam88';
 const REPO = 'todo';
 const ACTIVE_PATH = 'todo_active.md';
 const ARCHIVE_PATH = 'todo_archive.md';
-const RAW_BASE = `https://raw.githubusercontent.com/${OWNER}/${REPO}/main/`;
 const API_BASE = `https://api.github.com/repos/${OWNER}/${REPO}/contents/`;
 const AUTO_REFRESH = 30000;
 
@@ -661,17 +660,24 @@ function cleanEmptySections(text) {
   return result.join('\n');
 }
 
-// Load
+// Load via GitHub API (no CDN cache)
+async function fetchRaw(path) {
+  const token = getToken();
+  const headers = { 'Accept': 'application/vnd.github.v3.raw' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(API_BASE + path + '?t=' + Date.now(), { headers });
+  if (!res.ok) throw new Error('API error: ' + res.status);
+  return res.text();
+}
+
 async function load() {
   const btn = document.getElementById('refreshBtn');
   btn.classList.add('loading');
   try {
-    const [activeRes, archiveRes] = await Promise.all([
-      fetch(RAW_BASE + ACTIVE_PATH + '?t=' + Date.now()),
-      fetch(RAW_BASE + ARCHIVE_PATH + '?t=' + Date.now())
+    const [activeText, archiveText] = await Promise.all([
+      fetchRaw(ACTIVE_PATH),
+      fetchRaw(ARCHIVE_PATH)
     ]);
-    const activeText = await activeRes.text();
-    const archiveText = await archiveRes.text();
 
     const ap = parseMd(activeText);
     activeData = { raw: activeText, sections: ap.sections, count: ap.count };
