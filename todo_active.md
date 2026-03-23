@@ -21,3 +21,4 @@
 - [ ] `T-018` `중` `2026-03-27` YGG Outlook 메일 Gmail 이전 — POP 가져오기 또는 PST→GSMMO 방식, 참고: sotheb.co.kr/Google/346
 - [ ] `T-004` `하` `-` DataTable 가상화 검토 (react-window)
 - [ ] `T-017` `하` `2026-06-23` TODO 웹 UI 개발 — 웹에서 TODO 조회/수정/상세 내용 편집 기능
+
