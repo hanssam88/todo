@@ -32,6 +32,7 @@
 - [ ] `T-016` `중` `2026-03-30` Slack 멘션 자동 응답 봇 개발 — 🚧 BLOCKER: 슬랙 워크스페이스 관리자 앱 설치 승인 대기 중. 승인 완료 후: ①api.slack.com/apps→앱 선택 ②Settings→Install App ③Bot User OAuth Token(xoxb-...) 복사 ④.env에 붙여넣기 → `python -m src.bot` 실행. 코드 구현 완료(30 tests pass), 위치: GGT/slack-auto-reply/
 - [ ] `T-018` `중` `2026-03-27` YGG Outlook 메일 Gmail 이전 — POP 가져오기 또는 PST→GSMMO 방식, 참고: sotheb.co.kr/Google/346
 - [ ] `T-017` `하` `2026-06-23` TODO 웹 UI 개발 — 웹에서 TODO 조회/수정/상세 내용 편집 기능
+- [ ] `T-039` `중` `2026-03-24` TODO 티켓 클릭 시 블로커 내용 짤림 버그 수정
 - [ ] `T-026` `중` `2026-04-23` 멀티 에이전트와 스킬 발현율을 높이는 방법 논의
 - [ ] `T-027` `상` `2026-03-24` Gmail MCP 자동화 활용 — Claude Code에서 Gmail MCP(claude.ai 빌트인)로 메일 조회/검색/드래프트 작성 가능 확인. 활용 방안: ①아고다 Boost Hero 성과 데이터 자동 집계 ②씨트립 회의록 첨부파일 자동 수집 ③파트너 메일 모니터링 자동화
 
