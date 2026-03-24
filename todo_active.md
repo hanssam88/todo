@@ -10,7 +10,6 @@
 
 ## 씨트립
 - [ ] `T-028` `상` `2026-03-28` auto-map SKIP_AMBIGUOUS 점수 랭킹 로직 구현 — 설계 완료. 계획: docs/superpowers/plans/2026-03-24-ambiguous-score-ranking.md. 추가 반영 필요: ①Superior≈Standard 동의어 그룹 ②괄호 내 텍스트(Disabled-friendly 등) 보조 매칭
-- [ ] `T-012` `하` `2026-03-24` 객실명 상이 수정 후 푸시 — 10051935 / 573821: 공급 Good room (YouTube/Netflix/65-inch TV/bathtub/curling iron rental/lens case provided) → 야놀자 Deluxe
 - [ ] `T-013` `하` `2026-03-24` 금연으로 수정 후 재푸시 — 1000101964 (야놀자: 전객실 금연 / 공급: 전부 흡연 가능)
 - [ ] `T-014` `하` `2026-03-24` 흡연으로 수정 후 재푸시 — 114222668 (야놀자: 흡연 객실 O / 공급: 전부 금연)
 - [ ] `T-015` `하` `2026-03-24` 전 상품 재푸시 — 10053527
