@@ -32,3 +32,4 @@
 - [ ] `T-039` `중` `2026-03-24` TODO 티켓 클릭 시 블로커 내용 짤림 버그 수정
 - [ ] `T-026` `중` `2026-04-23` 멀티 에이전트와 스킬 발현율을 높이는 방법 논의
 - [ ] `T-027` `상` `2026-03-24` Gmail MCP 자동화 활용 — Claude Code에서 Gmail MCP(claude.ai 빌트인)로 메일 조회/검색/드래프트 작성 가능 확인. 활용 방안: ①아고다 Boost Hero 성과 데이터 자동 집계 ②씨트립 회의록 첨부파일 자동 수집 ③파트너 메일 모니터링 자동화
+- [ ] `T-041` `중` `2026-04-01` Google Drive MCP feature flag 활성화 요청 — 🚧 BLOCKER: Anthropic 서버 측 `mcp_gdrive` feature flag 미활성화 상태. 사용자 측 활성화 불가(API PUT → 403). 필요 조치: ①https://support.anthropic.com 에서 티켓 생성 ②내용: "Google Drive MCP (mcp_gdrive) feature flag 활성화 요청" ③계정: sengmin.hyun@yanolja.com ④조직UUID: 93b4dd40-c5f9-44fa-b186-31f1bfa96223 ⑤현상: Drive 인증+enabled 상태지만 allow_indexing/allow_search=false, 콘솔에 "mcp_gdrive is not" 표시. 활성화 완료 후 → 회의록 크론 트리거(trig_01LBCg35GbUCXdUqrxCD99fC)를 Drive 직접 읽기 버전으로 업그레이드
