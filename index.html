@@ -98,6 +98,7 @@
   .tag-high { background: #da3633; color: #fff; }
   .tag-mid { background: #d29922; color: #fff; }
   .tag-low { background: #30363d; color: #8b949e; }
+  .tag-section { background: #1f6feb; color: #fff; }
   .dday { color: #f85149; font-weight: 600; }
   .dday.safe { color: #3fb950; }
   .dday.near { color: #d29922; }
@@ -477,6 +478,7 @@ function renderSections(sections, isArchive) {
             <div class="item-title">${esc(item.title)}</div>
             <div class="item-meta">
               <span class="tag tag-id">${item.id}</span>
+              <span class="tag tag-section">${esc(s.title)}</span>
               <span class="tag ${urgencyTag(item.urgency)}">${esc(item.urgency)}</span>
               <span>${dateDisplay}</span>
               ${d !== null ? `<span class="${ddayClass(d)}">${ddayText(d)}</span>` : ''}
