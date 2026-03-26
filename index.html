@@ -184,6 +184,10 @@
       .tag-id {
         color: #8b949e;
       }
+      .tag-category {
+        background: #1f6feb;
+        color: #fff;
+      }
       .tag-high {
         background: #da3633;
         color: #fff;
@@ -521,6 +525,165 @@
         opacity: 0.5;
         pointer-events: none;
       }
+
+      /* Filter bar */
+      .filter-bar {
+        display: none;
+        flex-direction: column;
+        gap: 8px;
+        padding: 8px 0;
+        border-bottom: 1px solid #21262d;
+        margin-bottom: 8px;
+      }
+      .filter-bar.show {
+        display: flex;
+      }
+      .filter-search {
+        width: 100%;
+        padding: 8px 12px;
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        color: #e6edf3;
+        font-size: 14px;
+      }
+      .filter-search:focus {
+        outline: none;
+        border-color: #58a6ff;
+      }
+      .filter-search::placeholder {
+        color: #484f58;
+      }
+      .filter-chips {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .filter-chip {
+        padding: 4px 10px;
+        border-radius: 14px;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid #30363d;
+        background: transparent;
+        color: #8b949e;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .filter-chip.active {
+        border-color: #58a6ff;
+        color: #58a6ff;
+        background: rgba(88, 166, 255, 0.1);
+      }
+      .filter-toggle {
+        background: none;
+        border: none;
+        color: #8b949e;
+        font-size: 16px;
+        cursor: pointer;
+        padding: 4px;
+      }
+      .filter-toggle:hover {
+        color: #e6edf3;
+      }
+      .filter-toggle.active {
+        color: #58a6ff;
+      }
+      .filter-count {
+        font-size: 12px;
+        color: #8b949e;
+        padding: 4px 0;
+        text-align: center;
+      }
+
+      /* Shared form styles (add + edit modals) */
+      .form-group {
+        margin-bottom: 12px;
+      }
+      .form-label {
+        font-size: 12px;
+        color: #8b949e;
+        margin-bottom: 4px;
+        display: block;
+      }
+      .form-select {
+        width: 100%;
+        padding: 10px 12px;
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        color: #e6edf3;
+        font-size: 14px;
+        appearance: none;
+        -webkit-appearance: none;
+      }
+      .form-select:focus {
+        outline: none;
+        border-color: #58a6ff;
+      }
+      .urgency-group {
+        display: flex;
+        gap: 8px;
+      }
+      .urgency-btn-form {
+        flex: 1;
+        padding: 8px;
+        text-align: center;
+        border-radius: 8px;
+        border: 2px solid #30363d;
+        background: none;
+        color: #8b949e;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .urgency-btn-form[data-u="상"] {
+        border-color: #da3633;
+        color: #da3633;
+      }
+      .urgency-btn-form[data-u="중"] {
+        border-color: #d29922;
+        color: #d29922;
+      }
+      .urgency-btn-form[data-u="하"] {
+        border-color: #8b949e;
+      }
+      .urgency-btn-form.selected {
+        color: #fff !important;
+      }
+      .urgency-btn-form[data-u="상"].selected {
+        background: #da3633;
+      }
+      .urgency-btn-form[data-u="중"].selected {
+        background: #d29922;
+      }
+      .urgency-btn-form[data-u="하"].selected {
+        background: #30363d;
+      }
+
+      /* FAB */
+      .add-fab {
+        position: fixed;
+        bottom: max(20px, env(safe-area-inset-bottom, 20px));
+        left: 20px;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #58a6ff;
+        border: none;
+        color: #fff;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        line-height: 1;
+      }
+      .add-fab:active {
+        background: #388bfd;
+      }
     </style>
   </head>
   <body>
@@ -528,6 +691,14 @@
       <h1>TODO</h1>
       <div class="header-right">
         <span class="sync-info" id="syncInfo">loading...</span>
+        <button
+          class="filter-toggle"
+          id="filterToggle"
+          onclick="toggleFilterBar()"
+          title="필터"
+        >
+          &#x1F50D;
+        </button>
         <button
           class="settings-btn"
           onclick="showTokenModal()"
@@ -547,11 +718,75 @@
       </button>
     </div>
 
+    <div class="filter-bar" id="filterBar">
+      <input
+        class="filter-search"
+        id="filterSearch"
+        type="text"
+        placeholder="검색어 입력..."
+        oninput="applyFilters()"
+      />
+      <div class="filter-chips" id="filterChips">
+        <button
+          class="filter-chip"
+          data-type="urgency"
+          data-value="상"
+          onclick="toggleChip(this)"
+        >
+          상
+        </button>
+        <button
+          class="filter-chip"
+          data-type="urgency"
+          data-value="중"
+          onclick="toggleChip(this)"
+        >
+          중
+        </button>
+        <button
+          class="filter-chip"
+          data-type="urgency"
+          data-value="하"
+          onclick="toggleChip(this)"
+        >
+          하
+        </button>
+        <span style="width: 1px; background: #30363d; margin: 0 2px"></span>
+        <button
+          class="filter-chip"
+          data-type="dday"
+          data-value="overdue"
+          onclick="toggleChip(this)"
+        >
+          지연
+        </button>
+        <button
+          class="filter-chip"
+          data-type="dday"
+          data-value="week"
+          onclick="toggleChip(this)"
+        >
+          이번주
+        </button>
+        <button
+          class="filter-chip"
+          data-type="dday"
+          data-value="backlog"
+          onclick="toggleChip(this)"
+        >
+          백로그
+        </button>
+      </div>
+      <div class="filter-chips" id="sectionChips"></div>
+      <div class="filter-count" id="filterCount" style="display: none"></div>
+    </div>
+
     <div id="content"><div class="empty">loading...</div></div>
 
     <button class="refresh-btn" id="refreshBtn" onclick="load()">
       &#x21bb;
     </button>
+    <button class="add-fab" id="addFab" onclick="showAddModal()">+</button>
 
     <!-- Bottom Sheet -->
     <div class="overlay" id="overlay" onclick="closeSheet()"></div>
@@ -560,6 +795,9 @@
       <div class="sheet-title" id="sheetTitle">T-001</div>
       <button class="sheet-action" onclick="doAction('complete')">
         <span class="icon">&#10003;</span> 완료 처리
+      </button>
+      <button class="sheet-action" onclick="openEditModal()">
+        <span class="icon">&#9998;</span> 편집
       </button>
       <button class="sheet-action" onclick="toggleUrgencyPicker()">
         <span class="icon">&#9650;</span> 긴급도 변경
@@ -617,6 +855,168 @@
       </div>
     </div>
 
+    <!-- Add Modal -->
+    <div class="modal" id="addModal">
+      <div class="modal-box" style="max-width: 400px">
+        <div class="modal-title">새 TODO 추가</div>
+        <div class="form-group">
+          <label class="form-label">제목 *</label>
+          <input
+            class="modal-input"
+            id="addTitle"
+            type="text"
+            placeholder="동사로 시작 (예: 확인하기, 전달하기)"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">섹션 *</label>
+          <select class="form-select" id="addSection"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">태그 *</label>
+          <select class="form-select" id="addTag"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">긴급도 *</label>
+          <div class="urgency-group">
+            <button
+              class="urgency-btn-form"
+              data-u="상"
+              onclick="selectAddUrgency(this)"
+            >
+              상
+            </button>
+            <button
+              class="urgency-btn-form selected"
+              data-u="중"
+              onclick="selectAddUrgency(this)"
+            >
+              중
+            </button>
+            <button
+              class="urgency-btn-form"
+              data-u="하"
+              onclick="selectAddUrgency(this)"
+            >
+              하
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">기한</label>
+          <input class="modal-input" id="addDate" type="date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">블로커 (선택)</label>
+          <input
+            class="modal-input"
+            id="addBlocker"
+            type="text"
+            placeholder="대기 사유, 의존성 등"
+          />
+        </div>
+        <div class="modal-actions">
+          <button class="modal-btn cancel" onclick="closeAddModal()">
+            취소
+          </button>
+          <button
+            class="modal-btn primary"
+            id="addSubmitBtn"
+            onclick="submitAdd()"
+          >
+            추가
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+      <div class="modal-box" style="max-width: 400px">
+        <div class="modal-title">
+          TODO 편집
+          <span id="editId" style="color: #8b949e; font-size: 13px"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">제목</label>
+          <input class="modal-input" id="editTitle" type="text" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">섹션</label>
+          <select class="form-select" id="editSection"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">태그</label>
+          <select class="form-select" id="editTag"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">긴급도</label>
+          <div class="urgency-group">
+            <button
+              class="urgency-btn-form"
+              data-u="상"
+              onclick="selectEditUrgency(this)"
+            >
+              상
+            </button>
+            <button
+              class="urgency-btn-form"
+              data-u="중"
+              onclick="selectEditUrgency(this)"
+            >
+              중
+            </button>
+            <button
+              class="urgency-btn-form"
+              data-u="하"
+              onclick="selectEditUrgency(this)"
+            >
+              하
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">기한</label>
+          <input class="modal-input" id="editDate" type="date" />
+          <div style="margin-top: 4px">
+            <button
+              class="filter-chip"
+              type="button"
+              onclick="
+                document.getElementById('editDate').value = '';
+                this.blur();
+              "
+              style="font-size: 11px"
+            >
+              기한 없음 (백로그)
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">블로커</label>
+          <textarea
+            class="modal-input"
+            id="editBlocker"
+            rows="3"
+            placeholder="대기 사유, 의존성 등"
+            style="resize: vertical"
+          ></textarea>
+        </div>
+        <div class="modal-actions">
+          <button class="modal-btn cancel" onclick="closeEditModal()">
+            취소
+          </button>
+          <button
+            class="modal-btn primary"
+            id="editSubmitBtn"
+            onclick="submitEdit()"
+          >
+            저장
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
@@ -632,6 +1032,369 @@
       let activeData = { raw: "", sections: [], count: 0 };
       let archiveData = { raw: "", sections: [], count: 0 };
       let selectedItem = null;
+      let filters = { search: "", urgency: null, dday: null, section: null };
+
+      // Filter
+      function toggleFilterBar() {
+        const bar = document.getElementById("filterBar");
+        const btn = document.getElementById("filterToggle");
+        bar.classList.toggle("show");
+        btn.classList.toggle("active");
+        if (bar.classList.contains("show")) {
+          document.getElementById("filterSearch").focus();
+          buildSectionChips();
+        }
+      }
+
+      function buildSectionChips() {
+        const data = currentTab === "active" ? activeData : archiveData;
+        const el = document.getElementById("sectionChips");
+        el.innerHTML = data.sections
+          .map(
+            (s) =>
+              `<button class="filter-chip${filters.section === s.title ? " active" : ""}" data-type="section" data-value="${esc(s.title)}" onclick="toggleChip(this)">${esc(s.title)}</button>`,
+          )
+          .join("");
+      }
+
+      function toggleChip(el) {
+        const type = el.dataset.type;
+        document
+          .querySelectorAll(`.filter-chip[data-type="${type}"]`)
+          .forEach((c) => {
+            if (c !== el) c.classList.remove("active");
+          });
+        el.classList.toggle("active");
+        filters[type] = el.classList.contains("active")
+          ? el.dataset.value
+          : null;
+        applyFilters();
+      }
+
+      function applyFilters() {
+        filters.search = document
+          .getElementById("filterSearch")
+          .value.trim()
+          .toLowerCase();
+        renderCurrent();
+      }
+
+      function filterItems(items) {
+        return items.filter((item) => {
+          if (filters.search) {
+            const text = (
+              item.title +
+              " " +
+              item.id +
+              " " +
+              (item.blocker || "") +
+              " " +
+              (item.tag || "")
+            ).toLowerCase();
+            if (!text.includes(filters.search)) return false;
+          }
+          if (filters.urgency && item.urgency !== filters.urgency) return false;
+          if (filters.dday) {
+            const d = calcDday(item.date);
+            if (filters.dday === "overdue" && (d === null || d >= 0))
+              return false;
+            if (filters.dday === "week" && (d === null || d < 0 || d > 7))
+              return false;
+            if (filters.dday === "backlog" && item.date !== "-") return false;
+          }
+          return true;
+        });
+      }
+
+      function hasActiveFilters() {
+        return (
+          filters.search || filters.urgency || filters.dday || filters.section
+        );
+      }
+
+      // Add/Edit shared
+      const KNOWN_TAGS = [
+        "#운영",
+        "#개발",
+        "#법무",
+        "#영업",
+        "#총무",
+        "#인프라",
+      ];
+      const DEFAULT_SECTIONS = ["아고다", "씨트립", "공통"];
+
+      function getSections() {
+        const fromData = activeData.sections.map((s) => s.title);
+        const all = [...DEFAULT_SECTIONS];
+        fromData.forEach((s) => {
+          if (!all.includes(s)) all.push(s);
+        });
+        return all;
+      }
+
+      function populateFormSelects(sectionSelectId, tagSelectId) {
+        const sectionEl = document.getElementById(sectionSelectId);
+        const tagEl = document.getElementById(tagSelectId);
+        sectionEl.innerHTML = getSections()
+          .map((s) => `<option value="${esc(s)}">${esc(s)}</option>`)
+          .join("");
+        tagEl.innerHTML = KNOWN_TAGS.map(
+          (t) => `<option value="${t}">${t}</option>`,
+        ).join("");
+      }
+
+      // Add modal
+      let addUrgency = "중";
+
+      function showAddModal() {
+        if (!hasToken()) {
+          showTokenModal();
+          toast("먼저 GitHub Token을 설정하세요", "error");
+          return;
+        }
+        populateFormSelects("addSection", "addTag");
+        document.getElementById("addTitle").value = "";
+        document.getElementById("addSection").value = "공통";
+        document.getElementById("addTag").value = "#운영";
+        document.getElementById("addDate").value = "";
+        document.getElementById("addBlocker").value = "";
+        addUrgency = "중";
+        document
+          .querySelectorAll("#addModal .urgency-btn-form")
+          .forEach((b) => {
+            b.classList.toggle("selected", b.dataset.u === "중");
+          });
+        document.getElementById("addModal").classList.add("show");
+        document.getElementById("addTitle").focus();
+      }
+
+      function closeAddModal() {
+        document.getElementById("addModal").classList.remove("show");
+      }
+
+      function selectAddUrgency(el) {
+        addUrgency = el.dataset.u;
+        document
+          .querySelectorAll("#addModal .urgency-btn-form")
+          .forEach((b) => {
+            b.classList.toggle("selected", b === el);
+          });
+      }
+
+      async function submitAdd() {
+        const title = document.getElementById("addTitle").value.trim();
+        if (!title) {
+          toast("제목을 입력하세요", "error");
+          return;
+        }
+
+        const section = document.getElementById("addSection").value;
+        const tag = document.getElementById("addTag").value;
+        const dateVal = document.getElementById("addDate").value || "-";
+        const blocker = document.getElementById("addBlocker").value.trim();
+        const btn = document.getElementById("addSubmitBtn");
+        btn.disabled = true;
+        btn.textContent = "추가 중...";
+
+        try {
+          const file = await getFile(ACTIVE_PATH);
+          let content = decodeContent(file.content);
+
+          const idMatch = content.match(/<!-- last_id: (\d+) -->/);
+          const lastId = idMatch ? parseInt(idMatch[1]) : 0;
+          const newId = lastId + 1;
+          const newIdStr = `T-${String(newId).padStart(3, "0")}`;
+
+          content = content.replace(
+            /<!-- last_id: \d+ -->/,
+            `<!-- last_id: ${newId} -->`,
+          );
+
+          let line = `- [ ] \`${newIdStr}\` \`${tag}\` \`${addUrgency}\` \`${dateVal}\` ${title}`;
+          if (blocker) line += ` \u2014 ${blocker}`;
+
+          const sectionHeader = `## ${section}`;
+          const lines = content.split("\n");
+
+          if (content.includes(sectionHeader)) {
+            let insertIdx = -1;
+            let inSection = false;
+            for (let i = 0; i < lines.length; i++) {
+              if (lines[i].startsWith(sectionHeader)) {
+                inSection = true;
+                insertIdx = i + 1;
+                continue;
+              }
+              if (inSection) {
+                if (lines[i].startsWith("## ") || lines[i].startsWith("# "))
+                  break;
+                if (lines[i].startsWith("- [")) insertIdx = i + 1;
+              }
+            }
+            lines.splice(insertIdx, 0, line);
+            content = lines.join("\n");
+          } else {
+            content =
+              content.trimEnd() + "\n\n" + sectionHeader + "\n\n" + line + "\n";
+          }
+
+          await updateFile(
+            ACTIVE_PATH,
+            content,
+            file.sha,
+            `add: ${newIdStr} ${title}`,
+          );
+          closeAddModal();
+          toast(`${newIdStr} 추가됨`, "success");
+          await load();
+        } catch (err) {
+          toast("오류: " + err.message, "error");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "추가";
+        }
+      }
+
+      // Edit modal
+      let editUrgency = "중";
+      let editItemId = null;
+
+      function openEditModal() {
+        const item = findItem(selectedItem);
+        if (!item) {
+          toast("항목을 찾을 수 없습니다", "error");
+          return;
+        }
+        closeSheet();
+
+        editItemId = item.id;
+        editUrgency = item.urgency;
+
+        populateFormSelects("editSection", "editTag");
+
+        document.getElementById("editId").textContent = item.id;
+        document.getElementById("editTitle").value = item.title;
+        document.getElementById("editTag").value = item.tag || "#운영";
+        document.getElementById("editDate").value =
+          item.date === "-" ? "" : item.date;
+        document.getElementById("editBlocker").value = item.blocker || "";
+
+        for (const s of activeData.sections) {
+          if (s.items.some((i) => i.id === item.id)) {
+            document.getElementById("editSection").value = s.title;
+            break;
+          }
+        }
+
+        document
+          .querySelectorAll("#editModal .urgency-btn-form")
+          .forEach((b) => {
+            b.classList.toggle("selected", b.dataset.u === item.urgency);
+          });
+
+        document.getElementById("editModal").classList.add("show");
+        document.getElementById("editTitle").focus();
+      }
+
+      function closeEditModal() {
+        document.getElementById("editModal").classList.remove("show");
+        editItemId = null;
+      }
+
+      function selectEditUrgency(el) {
+        editUrgency = el.dataset.u;
+        document
+          .querySelectorAll("#editModal .urgency-btn-form")
+          .forEach((b) => {
+            b.classList.toggle("selected", b === el);
+          });
+      }
+
+      async function submitEdit() {
+        if (!editItemId) return;
+        const title = document.getElementById("editTitle").value.trim();
+        if (!title) {
+          toast("제목을 입력하세요", "error");
+          return;
+        }
+
+        const newSection = document.getElementById("editSection").value;
+        const tag = document.getElementById("editTag").value;
+        const dateVal = document.getElementById("editDate").value || "-";
+        const blocker = document.getElementById("editBlocker").value.trim();
+        const btn = document.getElementById("editSubmitBtn");
+        btn.disabled = true;
+        btn.textContent = "저장 중...";
+
+        try {
+          const file = await getFile(ACTIVE_PATH);
+          let content = decodeContent(file.content);
+          const lines = content.split("\n");
+
+          let newLine = `- [ ] \`${editItemId}\` \`${tag}\` \`${editUrgency}\` \`${dateVal}\` ${title}`;
+          if (blocker) newLine += ` \u2014 ${blocker}`;
+
+          let oldSection = null;
+          let removedIdx = -1;
+          let currentSection = null;
+          for (let i = 0; i < lines.length; i++) {
+            const sm = lines[i].match(/^## (.+)/);
+            if (sm) currentSection = sm[1];
+            if (
+              lines[i].includes("`" + editItemId + "`") &&
+              lines[i].startsWith("- [")
+            ) {
+              oldSection = currentSection;
+              removedIdx = i;
+              break;
+            }
+          }
+
+          if (removedIdx === -1) throw new Error("항목을 찾을 수 없습니다");
+
+          if (oldSection === newSection) {
+            lines[removedIdx] = newLine;
+          } else {
+            lines.splice(removedIdx, 1);
+            const sectionHeader = `## ${newSection}`;
+            let insertIdx = -1;
+            let inSection = false;
+            for (let i = 0; i < lines.length; i++) {
+              if (lines[i].startsWith(sectionHeader)) {
+                inSection = true;
+                insertIdx = i + 1;
+                continue;
+              }
+              if (inSection) {
+                if (lines[i].startsWith("## ") || lines[i].startsWith("# "))
+                  break;
+                if (lines[i].startsWith("- [")) insertIdx = i + 1;
+              }
+            }
+            if (insertIdx === -1) {
+              lines.push("", sectionHeader, "", newLine);
+            } else {
+              lines.splice(insertIdx, 0, newLine);
+            }
+          }
+
+          content = cleanEmptySections(lines.join("\n"));
+          await updateFile(
+            ACTIVE_PATH,
+            content,
+            file.sha,
+            `edit: ${editItemId} ${title}`,
+          );
+          closeEditModal();
+          toast(`${editItemId} 수정됨`, "success");
+          await load();
+        } catch (err) {
+          toast("오류: " + err.message, "error");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "저장";
+        }
+      }
 
       // Token
       function getToken() {
@@ -745,6 +1508,9 @@
         document
           .getElementById("tabArchive")
           .classList.toggle("active", tab === "archive");
+        if (document.getElementById("filterBar").classList.contains("show")) {
+          buildSectionChips();
+        }
         renderCurrent();
       }
 
@@ -761,7 +1527,30 @@
             continue;
           }
           if (!current) continue;
-          const im = line.match(/^- \[([ x])\] `(T-\d+)` `(\S+)` `(\S+)` (.+)/);
+          // 4-field: id, tag, urgency, date (active format)
+          let im = line.match(
+            /^- \[([ x])\] `(T-\d+)` `(#\S+)` `([상중하])` `(\S+)` (.+)/,
+          );
+          if (im) {
+            const [, done, id, tag, urgency, date, rest] = im;
+            const bm = rest.match(/^(.+?)\s*\u2014\s*(.+)$/);
+            const title = bm ? bm[1].trim() : rest.trim();
+            const blocker = bm ? bm[2].trim() : null;
+            current.items.push({
+              done: done === "x",
+              id,
+              tag,
+              urgency,
+              date,
+              title,
+              blocker,
+              raw: line,
+            });
+            count++;
+            continue;
+          }
+          // 3-field fallback: id, urgency, date (archive format)
+          im = line.match(/^- \[([ x])\] `(T-\d+)` `([상중하])` `(\S+)` (.+)/);
           if (im) {
             const [, done, id, urgency, date, rest] = im;
             const bm = rest.match(/^(.+?)\s*\u2014\s*(.+)$/);
@@ -770,6 +1559,7 @@
             current.items.push({
               done: done === "x",
               id,
+              tag: null,
               urgency,
               date,
               title,
@@ -839,6 +1629,7 @@
             <div class="item-title">${esc(item.title)}</div>
             <div class="item-meta">
               <span class="tag tag-id">${item.id}</span>
+              ${item.tag ? `<span class="tag tag-category">${esc(item.tag)}</span>` : ""}
               <span class="tag ${urgencyTag(item.urgency)}">${esc(item.urgency)}</span>
               <span>${dateDisplay}</span>
               ${d !== null ? `<span class="${ddayClass(d)}">${ddayText(d)}</span>` : ""}
@@ -847,6 +1638,7 @@
         </div>
         <div class="item-detail" id="detail-${item.id}">
           <div class="detail-row"><span class="detail-label">ID</span><span class="detail-value">${item.id}</span></div>
+          ${item.tag ? `<div class="detail-row"><span class="detail-label">태그</span><span class="detail-value">${esc(item.tag)}</span></div>` : ""}
           <div class="detail-row"><span class="detail-label">긴급도</span><span class="detail-value">${urgencyLabel(item.urgency)}</span></div>
           <div class="detail-row"><span class="detail-label">기한</span><span class="detail-value">${item.date === "-" ? "백로그" : item.date}${d !== null ? ` (${ddayText(d)})` : ""}</span></div>
           <div class="detail-row"><span class="detail-label">섹션</span><span class="detail-value">${esc(s.title)}</span></div>
@@ -863,8 +1655,24 @@
 
       function renderCurrent() {
         const data = currentTab === "active" ? activeData : archiveData;
+        let sections = data.sections;
+
+        if (hasActiveFilters()) {
+          sections = sections
+            .filter((s) => !filters.section || s.title === filters.section)
+            .map((s) => ({ ...s, items: filterItems(s.items) }))
+            .filter((s) => s.items.length > 0);
+          const total = sections.reduce((sum, s) => sum + s.items.length, 0);
+          const countEl = document.getElementById("filterCount");
+          countEl.style.display = "block";
+          countEl.textContent = `${total}건 표시 중`;
+        } else {
+          const countEl = document.getElementById("filterCount");
+          if (countEl) countEl.style.display = "none";
+        }
+
         document.getElementById("content").innerHTML = renderSections(
-          data.sections,
+          sections,
           currentTab === "archive",
         );
       }
@@ -1097,7 +1905,11 @@
         const lines = content.split("\n");
         const newLines = lines.map((line) => {
           if (line.includes("`" + id + "`")) {
-            return line.replace(/`[상중하]`/, "`" + newUrgency + "`");
+            // 4-field: `T-xxx` `#tag` `상` or 3-field: `T-xxx` `상`
+            return line.replace(
+              /(`T-\d+`\s+(?:`#\S+`\s+)?)`[상중하]`/,
+              "$1`" + newUrgency + "`",
+            );
           }
           return line;
         });
