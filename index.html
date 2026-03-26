@@ -188,6 +188,30 @@
         background: #1f6feb;
         color: #fff;
       }
+      .tag-cat-운영 {
+        background: #1f6feb;
+        color: #fff;
+      }
+      .tag-cat-개발 {
+        background: #8957e5;
+        color: #fff;
+      }
+      .tag-cat-법무 {
+        background: #da3633;
+        color: #fff;
+      }
+      .tag-cat-영업 {
+        background: #3fb950;
+        color: #fff;
+      }
+      .tag-cat-총무 {
+        background: #d29922;
+        color: #fff;
+      }
+      .tag-cat-인프라 {
+        background: #f778ba;
+        color: #fff;
+      }
       .tag-high {
         background: #da3633;
         color: #fff;
@@ -1629,7 +1653,7 @@
             <div class="item-title">${esc(item.title)}</div>
             <div class="item-meta">
               <span class="tag tag-id">${item.id}</span>
-              ${item.tag ? `<span class="tag tag-category">${esc(item.tag)}</span>` : ""}
+              ${item.tag ? `<span class="tag tag-category tag-cat-${item.tag.replace("#", "")}">${esc(item.tag)}</span>` : ""}
               <span class="tag ${urgencyTag(item.urgency)}">${esc(item.urgency)}</span>
               <span>${dateDisplay}</span>
               ${d !== null ? `<span class="${ddayClass(d)}">${ddayText(d)}</span>` : ""}
