@@ -92,7 +92,8 @@ jobs:
             const existingTitles = new Set(existing.map(i => i.title));
 
             for (const item of dueToday) {
-              const issueTitle = `[기한도래] ${item.id} ${item.title}`;
+              const shortTitle = item.title.slice(0, 20);
+              const issueTitle = `D-day ${item.id} ${shortTitle}`;
               if (existingTitles.has(issueTitle)) continue;
 
               const dd = item.dueDate.slice(5);
@@ -100,14 +101,15 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: issueTitle,
-                body: `📁 ${item.tag} · 📅 ${dd} · ${urgencyIcon[item.urgency] || '⚪'} ${item.urgency} /cc @hanssam88`,
+                body: `${urgencyIcon[item.urgency] || '⚪'}${item.tag} ${dd} /cc @hanssam88`,
                 labels: ['todo-notify', '기한도래'],
               });
               console.log(`Created: ${issueTitle}`);
             }
 
             for (const item of overdue) {
-              const issueTitle = `[지연] ${item.id} ${item.title}`;
+              const shortTitle = item.title.slice(0, 20);
+              const issueTitle = `지연D+${item.days} ${item.id} ${shortTitle}`;
               if (existingTitles.has(issueTitle)) continue;
 
               const dd = item.dueDate.slice(5);
@@ -115,7 +117,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: issueTitle,
-                body: `📁 ${item.tag} · 📅 ${dd} · 🚨 D+${item.days} · ${urgencyIcon[item.urgency] || '⚪'} ${item.urgency} /cc @hanssam88`,
+                body: `${urgencyIcon[item.urgency] || '⚪'}${item.tag} ${dd} /cc @hanssam88`,
                 labels: ['todo-notify', '지연'],
               });
               console.log(`Created: ${issueTitle}`);
@@ -186,10 +188,11 @@ jobs:
                 }
               } catch {}
 
+              const shortCleanTitle = cleanTitle.slice(0, 20);
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                title: `[생성] ${todoId} ${cleanTitle}`,
+                title: `생성 ${todoId} ${shortCleanTitle}`,
                 body: body ? `${body} /cc @hanssam88` : '/cc @hanssam88',
                 labels: ['todo-notify', '생성'],
               });
@@ -225,7 +228,7 @@ jobs:
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                title: `[완료] ${todoId}`,
+                title: `완료 ${todoId}`,
                 body: '/cc @hanssam88',
                 labels: ['todo-notify', '완료'],
               });
