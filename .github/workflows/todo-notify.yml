@@ -100,8 +100,9 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: issueTitle,
-                body: `${urgencyIcon[item.urgency] || '⚪'}${item.urgency} · #${item.tag} · 📅 ${dd}\n/cc @hanssam88`,
+                body: `${urgencyIcon[item.urgency] || '⚪'}${item.urgency} · #${item.tag} · 📅 ${dd}`,
                 labels: ['todo-notify', '기한도래'],
+                assignees: ['hanssam88'],
               });
               console.log(`Created: ${issueTitle}`);
             }
@@ -115,8 +116,9 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: issueTitle,
-                body: `${urgencyIcon[item.urgency] || '⚪'}${item.urgency} · #${item.tag} · 📅 ${dd} · 🚨 D+${item.days}\n/cc @hanssam88`,
+                body: `${urgencyIcon[item.urgency] || '⚪'}${item.urgency} · #${item.tag} · 📅 ${dd} · 🚨 D+${item.days}`,
                 labels: ['todo-notify', '지연'],
+                assignees: ['hanssam88'],
               });
               console.log(`Created: ${issueTitle}`);
             }
@@ -140,8 +142,7 @@ jobs:
           script: |
             const labels = [
               { name: 'todo-notify', color: '0075ca', description: 'Auto-generated TODO notification' },
-              { name: '생성', color: '0e8a16', description: 'New TODO created' },
-              { name: '완료', color: '6f42c1', description: 'TODO completed' }
+              { name: '생성', color: '0e8a16', description: 'New TODO created' }
             ];
             for (const label of labels) {
               try {
@@ -190,8 +191,9 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: `[생성] ${todoId} ${cleanTitle}`,
-                body: body ? `${body}\n/cc @hanssam88` : '/cc @hanssam88',
+                body: body || '',
                 labels: ['todo-notify', '생성'],
+                assignees: ['hanssam88'],
               });
               console.log(`Created issue: [생성] ${todoId} ${cleanTitle}`);
             }
@@ -221,12 +223,4 @@ jobs:
                   console.log(`Closed: ${issue.title}`);
                 }
               }
-
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: `[완료] ${todoId}`,
-                body: '/cc @hanssam88',
-                labels: ['todo-notify', '완료'],
-              });
             }
