@@ -102,7 +102,6 @@ jobs:
                 title: issueTitle,
                 body: `📁 ${item.tag} · 📅 ${dd} · ${urgencyIcon[item.urgency] || '⚪'} ${item.urgency}`,
                 labels: ['todo-notify', '기한도래'],
-                assignees: ['hanssam88']
               });
               console.log(`Created: ${issueTitle}`);
             }
@@ -118,7 +117,6 @@ jobs:
                 title: issueTitle,
                 body: `📁 ${item.tag} · 📅 ${dd} · 🚨 D+${item.days} · ${urgencyIcon[item.urgency] || '⚪'} ${item.urgency}`,
                 labels: ['todo-notify', '지연'],
-                assignees: ['hanssam88']
               });
               console.log(`Created: ${issueTitle}`);
             }
@@ -194,7 +192,6 @@ jobs:
                 title: `[생성] ${todoId} ${cleanTitle}`,
                 body,
                 labels: ['todo-notify', '생성'],
-                assignees: ['hanssam88']
               });
               console.log(`Created issue: [생성] ${todoId} ${cleanTitle}`);
             }
@@ -231,6 +228,5 @@ jobs:
                 title: `[완료] ${todoId}`,
                 body: '',
                 labels: ['todo-notify', '완료'],
-                assignees: ['hanssam88']
               });
             }
