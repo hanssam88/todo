@@ -96,11 +96,13 @@ jobs:
               if (existingTitles.has(issueTitle)) continue;
 
               const dd = item.dueDate.slice(5);
+              let body = `📋 ${item.title}\n${urgencyIcon[item.urgency] || '⚪'}${item.urgency} · #${item.tag} · 📅 ${dd}`;
+              if (item.blocker) body += `\n🚧 ${item.blocker}`;
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: issueTitle,
-                body: `${urgencyIcon[item.urgency] || '⚪'}${item.urgency} · #${item.tag} · 📅 ${dd}`,
+                body,
                 labels: ['todo-notify', '기한도래'],
                 assignees: ['hanssam88'],
               });
@@ -112,11 +114,13 @@ jobs:
               if (existingTitles.has(issueTitle)) continue;
 
               const dd = item.dueDate.slice(5);
+              let body = `📋 ${item.title}\n${urgencyIcon[item.urgency] || '⚪'}${item.urgency} · #${item.tag} · 📅 ${dd} · 🚨 D+${item.days}`;
+              if (item.blocker) body += `\n🚧 ${item.blocker}`;
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: issueTitle,
-                body: `${urgencyIcon[item.urgency] || '⚪'}${item.urgency} · #${item.tag} · 📅 ${dd} · 🚨 D+${item.days}`,
+                body,
                 labels: ['todo-notify', '지연'],
                 assignees: ['hanssam88'],
               });
@@ -179,10 +183,13 @@ jobs:
                 const content = fs.readFileSync('todo_active.md', 'utf8');
                 const todoLine = content.split('\n').find(l => l.includes('`' + todoId + '`'));
                 if (todoLine) {
-                  const m = todoLine.match(/`#(\S+)` `([상중하])` `(\d{4}-\d{2}-\d{2})`/);
+                  const m = todoLine.match(/`#(\S+)` `([상중하])` `(\d{4}-\d{2}-\d{2})` (.+)/);
                   if (m) {
-                    const [, tag, urg, date] = m;
-                    body = `${urgencyIcon[urg] || '⚪'}${urg} · #${tag} · 📅 ${date.slice(5)}`;
+                    const [, tag, urg, date, rest] = m;
+                    const title = rest.split(' — ')[0].trim();
+                    const blocker = rest.includes(' — ') ? rest.split(' — ').slice(1).join(' — ').trim() : '';
+                    body = `📋 ${title}\n${urgencyIcon[urg] || '⚪'}${urg} · #${tag} · 📅 ${date.slice(5)}`;
+                    if (blocker) body += `\n🚧 ${blocker}`;
                   }
                 }
               } catch {}
