@@ -148,38 +148,93 @@ jobs:
             console.log(`\n=== Summary ===`);
             console.log(`Due today: ${dueToday.length}, Overdue: ${overdue.length}`);
 
-  auto-close:
-    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[완료]')
+  notify-on-push:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       issues: write
     steps:
-      - name: Close completed TODO issues
+      - name: Ensure labels exist
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [
+              { name: 'todo-notify', color: '0075ca', description: 'Auto-generated TODO notification' },
+              { name: '생성', color: '0e8a16', description: 'New TODO created' },
+              { name: '완료', color: '6f42c1', description: 'TODO completed' }
+            ];
+            for (const label of labels) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name
+                });
+              } catch {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ...label
+                });
+              }
+            }
+
+      - name: Handle commit status
         uses: actions/github-script@v7
         with:
           script: |
             const msg = context.payload.head_commit.message;
-            const match = msg.match(/\[완료\] (T-\d+)/);
-            if (!match) return;
-            const todoId = match[1];
 
-            const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'todo-notify',
-              per_page: 100
-            });
+            // [생성] → Issue 생성
+            const createMatch = msg.match(/\[생성\] (T-\d+) (.+)/);
+            if (createMatch) {
+              const [, todoId, title] = createMatch;
+              const cleanTitle = title.split('\n')[0].trim();
 
-            for (const issue of issues) {
-              if (issue.title.includes(todoId)) {
-                await github.rest.issues.update({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issue.number,
-                  state: 'closed',
-                  state_reason: 'completed'
-                });
-                console.log(`Closed: ${issue.title}`);
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[생성] ${todoId} ${cleanTitle}`,
+                body: `## 새 TODO 생성\n\n| 항목 | 값 |\n|------|-----|\n| ID | \`${todoId}\` |\n| 제목 | ${cleanTitle} |\n\n> 자동 생성: ${new Date().toISOString().slice(0, 10)}`,
+                labels: ['todo-notify', '생성'],
+                assignees: ['hanssam88']
+              });
+              console.log(`Created issue: [생성] ${todoId} ${cleanTitle}`);
+            }
+
+            // [완료] → 관련 Issue 닫기
+            const doneMatch = msg.match(/\[완료\] (T-\d+)/);
+            if (doneMatch) {
+              const todoId = doneMatch[1];
+
+              const { data: issues } = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                labels: 'todo-notify',
+                per_page: 100
+              });
+
+              for (const issue of issues) {
+                if (issue.title.includes(todoId)) {
+                  await github.rest.issues.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    state: 'closed',
+                    state_reason: 'completed'
+                  });
+                  console.log(`Closed: ${issue.title}`);
+                }
               }
+
+              // 완료 알림 Issue도 생성
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `[완료] ${todoId}`,
+                body: `## TODO 완료\n\n\`${todoId}\` 항목이 완료 처리되었습니다.\n\n> 자동 생성: ${new Date().toISOString().slice(0, 10)}`,
+                labels: ['todo-notify', '완료'],
+                assignees: ['hanssam88']
+              });
             }
