@@ -1,6 +1,7 @@
 # TODO Archive
 
 ## 2026-03
+- [x] `T-047` `#인프라` `하` `2026-04-15` Google Drive/Docs MCP 자체 호스팅 설정 — Google Cloud Console에서 OAuth 자격증명 생성 필요 (프로젝트 생성 권한 이슈 해결 필요). 패키지: @piotr-agier/google-drive-mcp. 참고: plans/lexical-puzzling-lollipop.md
 - [x] `T-039` `#개발` `중` `2026-03-24` TODO 티켓 클릭 시 블로커 내용 짤림 버그 수정
 - [x] `T-049` `#인프라` `하` `2026-04-30` 알림 압축 테스트 항목 — 테스트 완료 후 삭제 예정
 - [x] `T-050` `#인프라` `하` `2026-04-30` 알림 포맷 테스트 (새 포맷 검증용) — 테스트 완료 후 삭제 예정
