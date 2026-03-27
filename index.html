@@ -1266,7 +1266,7 @@
             ACTIVE_PATH,
             content,
             file.sha,
-            `add: ${newIdStr} ${title}`,
+            `[생성] ${newIdStr} ${title}`,
           );
           closeAddModal();
           toast(`${newIdStr} 추가됨`, "success");
@@ -1407,7 +1407,7 @@
             ACTIVE_PATH,
             content,
             file.sha,
-            `edit: ${editItemId} ${title}`,
+            `[수정] ${editItemId} ${title}`,
           );
           closeEditModal();
           toast(`${editItemId} 수정됨`, "success");
@@ -1868,14 +1868,14 @@
           ACTIVE_PATH,
           cleanEmptySections(newLines.join("\n")),
           activeFile.sha,
-          `done: ${id}`,
+          `[완료] ${id}`,
         );
         const archiveFile2 = await getFile(ARCHIVE_PATH);
         await updateFile(
           ARCHIVE_PATH,
           newArchive,
           archiveFile2.sha,
-          `archive: ${id} 완료`,
+          `[완료] archive: ${id}`,
         );
       }
 
@@ -1912,14 +1912,14 @@
           ACTIVE_PATH,
           cleanEmptySections(newLines.join("\n")),
           activeFile.sha,
-          `cancel: ${id}`,
+          `[취소] ${id}`,
         );
         const archiveFile2 = await getFile(ARCHIVE_PATH);
         await updateFile(
           ARCHIVE_PATH,
           newArchive,
           archiveFile2.sha,
-          `archive: ${id} 취소`,
+          `[취소] archive: ${id}`,
         );
       }
 
@@ -1941,7 +1941,7 @@
           ACTIVE_PATH,
           newLines.join("\n"),
           file.sha,
-          `urgency: ${id} → ${newUrgency}`,
+          `[긴급도] ${id} → ${newUrgency}`,
         );
       }
 

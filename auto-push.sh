@@ -11,6 +11,6 @@ git diff --quiet todo_active.md todo_archive.md 2>/dev/null && exit 0
 
 git add todo_active.md todo_archive.md 2>/dev/null
 git diff --cached --quiet && exit 0
-git commit -m "update: TODO $(date +%Y-%m-%d\ %H:%M)" 2>/dev/null
+git commit -m "[동기화] TODO $(date +%Y-%m-%d\ %H:%M)" 2>/dev/null
 git pull --rebase origin main 2>/dev/null
 git push origin main 2>/dev/null

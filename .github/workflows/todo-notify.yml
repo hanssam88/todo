@@ -1,0 +1,185 @@
+name: TODO Daily Notification
+
+on:
+  schedule:
+    # KST 08:00 = UTC 23:00 (previous day)
+    - cron: "0 23 * * *"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-deadlines:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure labels exist
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [
+              { name: 'todo-notify', color: '0075ca', description: 'Auto-generated TODO notification' },
+              { name: '기한도래', color: 'e4e669', description: 'D-day notification' },
+              { name: '지연', color: 'd73a4a', description: 'Overdue notification' }
+            ];
+            for (const label of labels) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name
+                });
+              } catch {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ...label
+                });
+              }
+            }
+
+      - name: Check due dates and create issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // KST = UTC+9
+            const now = new Date();
+            const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+            const today = kst.toISOString().slice(0, 10);
+
+            const content = fs.readFileSync('todo_active.md', 'utf8');
+            const lines = content.split('\n');
+
+            // Format: - [ ] `T-001` `#법무` `상` `2026-03-28` Title — Details
+            const todoRegex = /^- \[ \] `(T-\d+)` `#(\S+)` `([상중하])` `(\d{4}-\d{2}-\d{2})` (.+)/;
+
+            const dueToday = [];
+            const overdue = [];
+
+            for (const line of lines) {
+              const match = line.match(todoRegex);
+              if (!match) continue;
+              const [, id, tag, urgency, dueDate, rest] = match;
+              const title = rest.split(' — ')[0].trim();
+              const blocker = rest.includes(' — ') ? rest.split(' — ').slice(1).join(' — ').trim() : '';
+
+              if (dueDate === today) {
+                dueToday.push({ id, tag, urgency, dueDate, title, blocker });
+              } else if (dueDate < today && dueDate !== '-') {
+                const days = Math.floor((new Date(today) - new Date(dueDate)) / 86400000);
+                overdue.push({ id, tag, urgency, dueDate, title, blocker, days });
+              }
+            }
+
+            // Fetch existing open issues to prevent duplicates
+            const { data: existing } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'todo-notify',
+              per_page: 100
+            });
+            const existingTitles = new Set(existing.map(i => i.title));
+
+            for (const item of dueToday) {
+              const issueTitle = `[기한도래] ${item.id} ${item.title}`;
+              if (existingTitles.has(issueTitle)) continue;
+
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: [
+                  `## 기한도래 알림`,
+                  ``,
+                  `| 항목 | 값 |`,
+                  `|------|-----|`,
+                  `| ID | \`${item.id}\` |`,
+                  `| 카테고리 | #${item.tag} |`,
+                  `| 긴급도 | ${item.urgency} |`,
+                  `| 기한 | ${item.dueDate} |`,
+                  item.blocker ? `| 블로커 | ${item.blocker} |` : '',
+                  ``,
+                  `> 자동 생성: ${today} KST 08:00`
+                ].filter(Boolean).join('\n'),
+                labels: ['todo-notify', '기한도래'],
+                assignees: ['hanssam88']
+              });
+              console.log(`Created: ${issueTitle}`);
+            }
+
+            for (const item of overdue) {
+              const issueTitle = `[지연] ${item.id} ${item.title}`;
+              if (existingTitles.has(issueTitle)) continue;
+
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: [
+                  `## 지연 알림`,
+                  ``,
+                  `| 항목 | 값 |`,
+                  `|------|-----|`,
+                  `| ID | \`${item.id}\` |`,
+                  `| 카테고리 | #${item.tag} |`,
+                  `| 긴급도 | ${item.urgency} |`,
+                  `| 기한 | ${item.dueDate} |`,
+                  `| 지연일수 | **${item.days}일** |`,
+                  item.blocker ? `| 블로커 | ${item.blocker} |` : '',
+                  ``,
+                  `> 자동 생성: ${today} KST 08:00`
+                ].filter(Boolean).join('\n'),
+                labels: ['todo-notify', '지연'],
+                assignees: ['hanssam88']
+              });
+              console.log(`Created: ${issueTitle}`);
+            }
+
+            console.log(`\n=== Summary ===`);
+            console.log(`Due today: ${dueToday.length}, Overdue: ${overdue.length}`);
+
+  auto-close:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[완료]')
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Close completed TODO issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const msg = context.payload.head_commit.message;
+            const match = msg.match(/\[완료\] (T-\d+)/);
+            if (!match) return;
+            const todoId = match[1];
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'todo-notify',
+              per_page: 100
+            });
+
+            for (const issue of issues) {
+              if (issue.title.includes(todoId)) {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  state: 'closed',
+                  state_reason: 'completed'
+                });
+                console.log(`Closed: ${issue.title}`);
+              }
+            }
