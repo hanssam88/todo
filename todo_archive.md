@@ -1,6 +1,7 @@
 # TODO Archive
 
 ## 2026-03
+- [x] `T-054` `#운영` `중` `2026-04-10` 아고다 업무 경편에게 단계적 이관 계획 수립 — 출처: 야놀자x아고다 운영 weekly 2026-03-27
 - [x] `T-032` `#운영` `중` `2026-03-31` 상위 100개 업체 매핑률 수기 확인 후 CSV Yoana 전달 — 늦어도 다음 주까지
 - [x] `T-047` `#인프라` `하` `2026-04-15` Google Drive/Docs MCP 자체 호스팅 설정 — Google Cloud Console에서 OAuth 자격증명 생성 필요 (프로젝트 생성 권한 이슈 해결 필요). 패키지: @piotr-agier/google-drive-mcp. 참고: plans/lexical-puzzling-lollipop.md
 - [x] `T-039` `#개발` `중` `2026-03-24` TODO 티켓 클릭 시 블로커 내용 짤림 버그 수정
