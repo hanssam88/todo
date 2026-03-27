@@ -62,7 +62,7 @@ jobs:
             // Format: - [ ] `T-001` `#법무` `상` `2026-03-28` Title — Details
             const todoRegex = /^- \[ \] `(T-\d+)` `#(\S+)` `([상중하])` `(\d{4}-\d{2}-\d{2})` (.+)/;
 
-            const urgencyIcon = { '상': '🔴', '중': '🟡', '하': '🟢' };
+            const urgencyLabel = { '상': '긴급', '중': '보통', '하': '낮음' };
             const dueToday = [];
             const overdue = [];
 
@@ -96,8 +96,8 @@ jobs:
               if (existingTitles.has(issueTitle)) continue;
 
               const dd = item.dueDate.slice(5);
-              let body = `📋 ${item.title}\n${urgencyIcon[item.urgency] || '⚪'}${item.urgency} · #${item.tag} · 📅 ${dd}`;
-              if (item.blocker) body += `\n🚧 ${item.blocker}`;
+              let body = `## ${item.title}\n\n\`${urgencyLabel[item.urgency] || item.urgency}\` \`#${item.tag}\` **D-Day** · ${dd}`;
+              if (item.blocker) body += `\n\n> 블로커: ${item.blocker}`;
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -114,8 +114,8 @@ jobs:
               if (existingTitles.has(issueTitle)) continue;
 
               const dd = item.dueDate.slice(5);
-              let body = `📋 ${item.title}\n${urgencyIcon[item.urgency] || '⚪'}${item.urgency} · #${item.tag} · 📅 ${dd} · 🚨 D+${item.days}`;
-              if (item.blocker) body += `\n🚧 ${item.blocker}`;
+              let body = `## ${item.title}\n\n\`${urgencyLabel[item.urgency] || item.urgency}\` \`#${item.tag}\` **D+${item.days}** · ${dd}`;
+              if (item.blocker) body += `\n\n> 블로커: ${item.blocker}`;
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -170,7 +170,7 @@ jobs:
           script: |
             const fs = require('fs');
             const msg = context.payload.head_commit.message;
-            const urgencyIcon = { '상': '🔴', '중': '🟡', '하': '🟢' };
+            const urgencyLabel = { '상': '긴급', '중': '보통', '하': '낮음' };
 
             // [생성] → Issue 생성 (todo_active.md에서 상세 정보 추출)
             const createMatch = msg.match(/\[생성\] (T-\d+) (.+)/);
@@ -188,8 +188,13 @@ jobs:
                     const [, tag, urg, date, rest] = m;
                     const title = rest.split(' — ')[0].trim();
                     const blocker = rest.includes(' — ') ? rest.split(' — ').slice(1).join(' — ').trim() : '';
-                    body = `📋 ${title}\n${urgencyIcon[urg] || '⚪'}${urg} · #${tag} · 📅 ${date.slice(5)}`;
-                    if (blocker) body += `\n🚧 ${blocker}`;
+                    const now = new Date();
+                    const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+                    const today = kst.toISOString().slice(0, 10);
+                    const daysLeft = Math.floor((new Date(date) - new Date(today)) / 86400000);
+                    const ddayStr = daysLeft === 0 ? '**D-Day**' : daysLeft > 0 ? `D-${daysLeft}` : `**D+${Math.abs(daysLeft)}**`;
+                    body = `## ${title}\n\n\`${urgencyLabel[urg] || urg}\` \`#${tag}\` ${ddayStr} · ${date.slice(5)}`;
+                    if (blocker) body += `\n\n> 블로커: ${blocker}`;
                   }
                 }
               } catch {}
