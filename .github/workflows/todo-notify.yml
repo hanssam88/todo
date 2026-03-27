@@ -100,9 +100,8 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: issueTitle,
-                body: `📁 ${item.tag} · 📅 ${dd} · ${urgencyIcon[item.urgency] || '⚪'} ${item.urgency}`,
+                body: `📁 ${item.tag} · 📅 ${dd} · ${urgencyIcon[item.urgency] || '⚪'} ${item.urgency} /cc @hanssam88`,
                 labels: ['todo-notify', '기한도래'],
-                assignees: ['hanssam88'],
               });
               console.log(`Created: ${issueTitle}`);
             }
@@ -116,9 +115,8 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: issueTitle,
-                body: `📁 ${item.tag} · 📅 ${dd} · 🚨 D+${item.days} · ${urgencyIcon[item.urgency] || '⚪'} ${item.urgency}`,
+                body: `📁 ${item.tag} · 📅 ${dd} · 🚨 D+${item.days} · ${urgencyIcon[item.urgency] || '⚪'} ${item.urgency} /cc @hanssam88`,
                 labels: ['todo-notify', '지연'],
-                assignees: ['hanssam88'],
               });
               console.log(`Created: ${issueTitle}`);
             }
@@ -192,9 +190,8 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: `[생성] ${todoId} ${cleanTitle}`,
-                body,
+                body: body ? `${body} /cc @hanssam88` : '/cc @hanssam88',
                 labels: ['todo-notify', '생성'],
-                assignees: ['hanssam88'],
               });
               console.log(`Created issue: [생성] ${todoId} ${cleanTitle}`);
             }
@@ -229,8 +226,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title: `[완료] ${todoId}`,
-                body: '',
+                body: '/cc @hanssam88',
                 labels: ['todo-notify', '완료'],
-                assignees: ['hanssam88'],
               });
             }
