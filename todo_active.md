@@ -31,7 +31,7 @@
 - [ ] `T-027` `#인프라` `상` `2026-03-24` Gmail MCP 자동화 활용 — Claude Code에서 Gmail MCP(claude.ai 빌트인)로 메일 조회/검색/드래프트 작성 가능 확인. 활용 방안: ①아고다 Boost Hero 성과 데이터 자동 집계 ②씨트립 회의록 첨부파일 자동 수집 ③파트너 메일 모니터링 자동화
 - [ ] `T-046` `#인프라` `하` `2026-04-08` 데이터블릭스 사용 가능 범위 확인
 - [ ] `T-041` `#인프라` `중` `2026-04-01` Google Drive MCP feature flag 활성화 요청 — 🚧 BLOCKER: Anthropic 서버 측 `mcp_gdrive` feature flag 미활성화 상태. 사용자 측 활성화 불가(API PUT → 403). 필요 조치: ①https://support.anthropic.com 에서 티켓 생성 ②내용: "Google Drive MCP (mcp_gdrive) feature flag 활성화 요청" ③계정: sengmin.hyun@yanolja.com ④조직UUID: 93b4dd40-c5f9-44fa-b186-31f1bfa96223 ⑤현상: Drive 인증+enabled 상태지만 allow_indexing/allow_search=false, 콘솔에 "mcp_gdrive is not" 표시. 활성화 완료 후 → 회의록 크론 트리거(trig_01LBCg35GbUCXdUqrxCD99fC)를 Drive 직접 읽기 버전으로 업그레이드
-- [ ] `T-057` `#인프라` `상` `-` fns 더존 대시보드 개발
+- [ ] `T-057` `#개발` `상` `-` fns 더존 대시보드 개발
 - [ ] `T-058` `#개발` `상` `-` fns 더존 재고 프로그래밍
 - [ ] `T-059` `#운영` `상` `-` fns legal assistance 개발
 - [ ] `T-060` `#운영` `상` `-` mem0 설정 — 1. 메모리 저장 방식 확인 스킬 없음 2. 기존 메모리 처리 여부
