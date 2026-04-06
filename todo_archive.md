@@ -42,6 +42,7 @@
 - [x] `T-010` `하` `2026-03-24` 전 상품 재푸시 — 10053527 (삭제 — 상세 항목으로 재등록)
 
 ## 2026-04
+- [x] `T-041` `#인프라` `중` `2026-04-01` Google Drive MCP feature flag 활성화 요청 — 🚧 BLOCKER: Anthropic 서버 측 `mcp_gdrive` feature flag 미활성화 상태. 사용자 측 활성화 불가(API PUT → 403). 필요 조치: ①https://support.anthropic.com 에서 티켓 생성 ②내용: "Google Drive MCP (mcp_gdrive) feature flag 활성화 요청" ③계정: sengmin.hyun@yanolja.com ④조직UUID: 93b4dd40-c5f9-44fa-b186-31f1bfa96223 ⑤현상: Drive 인증+enabled 상태지만 allow_indexing/allow_search=false, 콘솔에 "mcp_gdrive is not" 표시. 활성화 완료 후 → 회의록 크론 트리거(trig_01LBCg35GbUCXdUqrxCD99fC)를 Drive 직접 읽기 버전으로 업그레이드
 - [x] `T-062` `#개발` `중` `-` fns legal assistant 개발
 - [x] `T-072` `#운영` `상` `-` 다음세션 작업 이어서 하게하는 프롬프트 생성
 - [x] `T-065` `#인프라` `중` `-` 70% 넘으면 auto memory 실행
