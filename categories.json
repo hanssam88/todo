@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "updated_at": "2026-04-28",
+  "categories": [
+    {
+      "id": "common",
+      "name": "공통",
+      "order": 1,
+      "color": "#58a6ff",
+      "aliases": ["공통", "common"],
+      "is_default": true
+    },
+    {
+      "id": "ctrip",
+      "name": "씨트립",
+      "order": 2,
+      "color": "#ff7b72",
+      "aliases": ["씨트립", "트립닷컴", "ctrip", "trip"],
+      "partner_folder": "씨트립"
+    },
+    {
+      "id": "meituan",
+      "name": "메이투안",
+      "order": 3,
+      "color": "#ffa657",
+      "aliases": ["메이투안", "meituan"],
+      "partner_folder": "메이투안"
+    },
+    {
+      "id": "fliggy",
+      "name": "플리기",
+      "order": 4,
+      "color": "#a371f7",
+      "aliases": ["플리기", "fliggy"],
+      "partner_folder": "플리기"
+    },
+    {
+      "id": "createrip",
+      "name": "크리에이트립",
+      "order": 5,
+      "color": "#7ee787",
+      "aliases": ["크리에이트립", "creatrip"],
+      "partner_folder": "크리에이트립"
+    }
+  ]
+}

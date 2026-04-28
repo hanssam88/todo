@@ -685,6 +685,65 @@
         background: #30363d;
       }
 
+      /* Category manager rows */
+      .cat-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 6px;
+        border-bottom: 1px solid #21262d;
+      }
+      .cat-row:last-child {
+        border-bottom: none;
+      }
+      .cat-row .cat-swatch {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        flex-shrink: 0;
+      }
+      .cat-row .cat-name {
+        flex: 1;
+        font-size: 14px;
+        color: #e6edf3;
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 4px 6px;
+        border-radius: 4px;
+      }
+      .cat-row .cat-name:focus {
+        outline: none;
+        border-color: #58a6ff;
+        background: #0d1117;
+      }
+      .cat-row .cat-btn {
+        background: none;
+        border: 1px solid #30363d;
+        color: #8b949e;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .cat-row .cat-btn:hover {
+        color: #e6edf3;
+        border-color: #58a6ff;
+      }
+      .cat-row .cat-btn.danger:hover {
+        color: #fff;
+        background: #da3633;
+        border-color: #da3633;
+      }
+      .cat-row .cat-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .cat-row .cat-default {
+        font-size: 11px;
+        color: #58a6ff;
+        margin-left: 4px;
+      }
+
       /* FAB */
       .add-fab {
         position: fixed;
@@ -722,6 +781,13 @@
           title="필터"
         >
           &#x1F50D;
+        </button>
+        <button
+          class="filter-toggle"
+          onclick="openCategoryModal()"
+          title="카테고리 관리"
+        >
+          &#x1F4C2;
         </button>
         <button
           class="settings-btn"
@@ -1041,6 +1107,58 @@
       </div>
     </div>
 
+    <!-- Category Manager Modal -->
+    <div class="modal" id="categoryModal">
+      <div class="modal-box" style="max-width: 460px">
+        <div class="modal-title">카테고리 관리</div>
+        <div class="modal-hint">
+          섹션(파트너사) 추가/이름변경/삭제. 변경 사항은 categories.json과
+          todo_active.md에 함께 기록됩니다.
+        </div>
+        <div id="categoryList" style="margin: 12px 0"></div>
+        <div
+          class="form-group"
+          style="
+            border-top: 1px solid #21262d;
+            padding-top: 12px;
+            margin-top: 12px;
+          "
+        >
+          <label class="form-label">새 카테고리 추가</label>
+          <div style="display: flex; gap: 8px; align-items: center">
+            <input
+              class="modal-input"
+              id="newCategoryName"
+              type="text"
+              placeholder="이름"
+              style="flex: 1"
+            />
+            <input
+              type="color"
+              id="newCategoryColor"
+              value="#58a6ff"
+              style="
+                width: 44px;
+                height: 38px;
+                background: #0d1117;
+                border: 1px solid #30363d;
+                border-radius: 8px;
+                cursor: pointer;
+              "
+            />
+            <button class="modal-btn primary" onclick="addCategory()">
+              추가
+            </button>
+          </div>
+        </div>
+        <div class="modal-actions" style="margin-top: 8px">
+          <button class="modal-btn cancel" onclick="closeCategoryModal()">
+            닫기
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
@@ -1049,14 +1167,37 @@
       const REPO = "todo";
       const ACTIVE_PATH = "todo_active.md";
       const ARCHIVE_PATH = "todo_archive.md";
+      const CATEGORIES_PATH = "categories.json";
       const API_BASE = `https://api.github.com/repos/${OWNER}/${REPO}/contents/`;
       const AUTO_REFRESH = 120000;
+      const CATEGORY_COLOR_PALETTE = [
+        "#58a6ff",
+        "#ff7b72",
+        "#ffa657",
+        "#a371f7",
+        "#7ee787",
+        "#79c0ff",
+        "#d2a8ff",
+        "#ffab70",
+        "#56d364",
+        "#f778ba",
+      ];
 
       let currentTab = "active";
       let activeData = { raw: "", sections: [], count: 0 };
       let archiveData = { raw: "", sections: [], count: 0 };
+      let categoriesData = { version: 1, categories: [] };
       let selectedItem = null;
       let filters = { search: "", urgency: null, dday: null, section: null };
+
+      function getCategoryByName(name) {
+        return categoriesData.categories.find((c) => c.name === name) || null;
+      }
+
+      function getCategoryColor(name) {
+        const cat = getCategoryByName(name);
+        return cat?.color || "#58a6ff";
+      }
 
       // Filter
       function toggleFilterBar() {
@@ -1148,6 +1289,17 @@
       const DEFAULT_SECTIONS = ["아고다", "씨트립", "공통"];
 
       function getSections() {
+        if (categoriesData.categories.length > 0) {
+          const ordered = [...categoriesData.categories]
+            .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+            .map((c) => c.name);
+          // 마크다운에만 존재하는 미등록 섹션도 끝에 노출 (안전장치)
+          const fromData = activeData.sections.map((s) => s.title);
+          fromData.forEach((s) => {
+            if (!ordered.includes(s)) ordered.push(s);
+          });
+          return ordered;
+        }
         const fromData = activeData.sections.map((s) => s.title);
         const all = [...DEFAULT_SECTIONS];
         fromData.forEach((s) => {
@@ -1627,9 +1779,29 @@
         return { "\uC0C1": "긴급", "\uC911": "보통", "\uD558": "낮음" }[u] || u;
       }
       function esc(s) {
-        const d = document.createElement("div");
-        d.textContent = s;
-        return d.innerHTML;
+        return String(s ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      // 카테고리 색상 화이트리스트 (#RGB / #RRGGBB / #RRGGBBAA만 허용)
+      function safeColor(c) {
+        return /^#[0-9a-fA-F]{3,8}$/.test(c) ? c : "#58a6ff";
+      }
+
+      // 카테고리 이름 검증 (마크다운/HTML/RegExp 모두에서 안전한지)
+      function validateCategoryName(name) {
+        if (!name || name.length > 50)
+          return "이름은 1~50자여야 합니다";
+        if (/[\r\n\t]/.test(name))
+          return "줄바꿈/탭 문자는 사용할 수 없습니다";
+        if (/[<>"'`]/.test(name))
+          return "<, >, \", ', ` 문자는 사용할 수 없습니다";
+        if (/^#/.test(name)) return "# 으로 시작할 수 없습니다";
+        return null;
       }
 
       // Render
@@ -1653,7 +1825,7 @@
             <div class="item-title">${esc(item.title)}</div>
             <div class="item-meta">
               <span class="tag tag-id">${item.id}</span>
-              ${item.tag ? `<span class="tag tag-category tag-cat-${item.tag.replace("#", "")}">${esc(item.tag)}</span>` : ""}
+              ${item.tag ? `<span class="tag tag-category tag-cat-${esc(item.tag.replace("#", "")).replace(/[^a-zA-Z0-9가-힣]/g, "")}">${esc(item.tag)}</span>` : ""}
               <span class="tag ${urgencyTag(item.urgency)}">${esc(item.urgency)}</span>
               <span>${dateDisplay}</span>
               ${d !== null ? `<span class="${ddayClass(d)}">${ddayText(d)}</span>` : ""}
@@ -1672,7 +1844,8 @@
               })
               .join("");
 
-            return `<div class="section"><div class="section-title">${esc(s.title)}</div>${items}</div>`;
+            const catColor = safeColor(getCategoryColor(s.title));
+            return `<div class="section"><div class="section-title" style="color:${catColor};border-left:3px solid ${catColor};padding-left:8px;">${esc(s.title)}</div>${items}</div>`;
           })
           .join("");
       }
@@ -1680,6 +1853,17 @@
       function renderCurrent() {
         const data = currentTab === "active" ? activeData : archiveData;
         let sections = data.sections;
+
+        // active 탭에 한해 categoriesData.order 기준 정렬 (archive는 월별 섹션이라 원본 순서 유지)
+        if (currentTab === "active" && categoriesData.categories.length > 0) {
+          const orderMap = new Map(
+            categoriesData.categories.map((c) => [c.name, c.order ?? 999]),
+          );
+          sections = [...sections].sort(
+            (a, b) =>
+              (orderMap.get(a.title) ?? 999) - (orderMap.get(b.title) ?? 999),
+          );
+        }
 
         if (hasActiveFilters()) {
           sections = sections
@@ -1958,10 +2142,19 @@
       }
 
       function cleanEmptySections(text) {
+        const protectedNames = new Set(
+          categoriesData.categories.map((c) => c.name),
+        );
         const lines = text.split("\n");
         const result = [];
         for (let i = 0; i < lines.length; i++) {
           if (lines[i].startsWith("## ")) {
+            const sectionName = lines[i].slice(3).trim();
+            // categories.json에 등재된 카테고리는 빈 상태여도 헤더 보존
+            if (protectedNames.has(sectionName)) {
+              result.push(lines[i]);
+              continue;
+            }
             let hasItems = false;
             for (let j = i + 1; j < lines.length; j++) {
               if (lines[j].startsWith("## ")) break;
@@ -1985,6 +2178,341 @@
         return result.join("\n");
       }
 
+      // ===== Category Management =====
+
+      function openCategoryModal() {
+        if (!hasToken()) {
+          showTokenModal();
+          toast("먼저 GitHub Token을 설정하세요", "error");
+          return;
+        }
+        renderCategoryList();
+        document.getElementById("categoryModal").classList.add("show");
+      }
+
+      function closeCategoryModal() {
+        document.getElementById("categoryModal").classList.remove("show");
+      }
+
+      function renderCategoryList() {
+        const el = document.getElementById("categoryList");
+        const cats = [...categoriesData.categories].sort(
+          (a, b) => (a.order ?? 999) - (b.order ?? 999),
+        );
+        if (cats.length === 0) {
+          el.innerHTML =
+            '<div style="color:#8b949e;font-size:13px;padding:8px">등록된 카테고리가 없습니다. 아래에서 추가하세요.</div>';
+          return;
+        }
+        el.innerHTML = cats
+          .map((c) => {
+            const itemCount =
+              activeData.sections.find((s) => s.title === c.name)?.items
+                .length ?? 0;
+            const isDefault = !!c.is_default;
+            return `<div class="cat-row" data-id="${esc(c.id)}">
+              <span class="cat-swatch" style="background:${safeColor(c.color)}"></span>
+              <input class="cat-name" type="text" value="${esc(c.name)}" data-orig="${esc(c.name)}" />
+              <span style="font-size:11px;color:#8b949e">${itemCount}건</span>
+              ${isDefault ? '<span class="cat-default">기본</span>' : ""}
+              <button class="cat-btn" onclick="renameCategoryFromRow('${esc(c.id)}')">이름변경</button>
+              <button class="cat-btn danger" onclick="deleteCategory('${esc(c.id)}')" ${isDefault ? "disabled" : ""}>삭제</button>
+            </div>`;
+          })
+          .join("");
+      }
+
+      function generateCategoryId(name) {
+        return "cat_" + Date.now().toString(36);
+      }
+
+      function pickNextColor() {
+        const used = new Set(
+          categoriesData.categories.map((c) => (c.color || "").toLowerCase()),
+        );
+        for (const c of CATEGORY_COLOR_PALETTE) {
+          if (!used.has(c.toLowerCase())) return c;
+        }
+        return CATEGORY_COLOR_PALETTE[
+          categoriesData.categories.length % CATEGORY_COLOR_PALETTE.length
+        ];
+      }
+
+      async function addCategory() {
+        const nameEl = document.getElementById("newCategoryName");
+        const colorEl = document.getElementById("newCategoryColor");
+        const name = nameEl.value.trim();
+        const validationErr = validateCategoryName(name);
+        if (validationErr) {
+          toast(validationErr, "error");
+          return;
+        }
+        if (categoriesData.categories.some((c) => c.name === name)) {
+          toast("이미 존재하는 카테고리 이름입니다", "error");
+          return;
+        }
+        const color = colorEl.value || pickNextColor();
+        const maxOrder = categoriesData.categories.reduce(
+          (m, c) => Math.max(m, c.order ?? 0),
+          0,
+        );
+        const newCat = {
+          id: generateCategoryId(name),
+          name,
+          order: maxOrder + 1,
+          color,
+          aliases: [name],
+        };
+        try {
+          // 1. active.md에 빈 섹션 헤더 추가
+          const activeFile = await getFile(ACTIVE_PATH);
+          const activeContent = decodeContent(activeFile.content);
+          if (new RegExp(`^## ${escapeRegex(name)}\\s*$`, "m").test(activeContent)) {
+            toast("active.md에 이미 같은 이름 섹션이 있습니다", "error");
+            return;
+          }
+          const newActive = activeContent.trimEnd() + "\n\n## " + name + "\n\n";
+
+          // 2. categoriesData 갱신
+          const prev = categoriesData;
+          categoriesData = {
+            ...categoriesData,
+            updated_at: new Date().toISOString().slice(0, 10),
+            categories: [...categoriesData.categories, newCat],
+          };
+
+          // 3. 두 파일 PUT — categories.json 먼저 (실패 시 active.md는 건드리지 않음)
+          try {
+            await saveCategoriesJson(`[chore] add category: ${name}`);
+          } catch (err) {
+            categoriesData = prev; // 롤백
+            throw err;
+          }
+          try {
+            await updateFile(
+              ACTIVE_PATH,
+              newActive,
+              activeFile.sha,
+              `[chore] add category: ${name}`,
+            );
+          } catch (err) {
+            toast(
+              `categories.json은 갱신됐으나 active.md 저장 실패 — 새로고침 후 수동으로 '## ${name}' 헤더를 추가하세요`,
+              "error",
+            );
+            throw err;
+          }
+
+          nameEl.value = "";
+          colorEl.value = pickNextColor();
+          toast(`카테고리 추가: ${name}`, "success");
+          await load();
+          renderCategoryList();
+        } catch (e) {
+          toast("추가 실패: " + e.message, "error");
+        }
+      }
+
+      async function renameCategoryFromRow(id) {
+        const row = document.querySelector(`.cat-row[data-id="${id}"]`);
+        if (!row) return;
+        const input = row.querySelector(".cat-name");
+        const oldName = input.dataset.orig;
+        const newName = input.value.trim();
+        const validationErr = validateCategoryName(newName);
+        if (validationErr) {
+          toast(validationErr, "error");
+          input.value = oldName;
+          return;
+        }
+        if (newName === oldName) return;
+        if (categoriesData.categories.some((c) => c.name === newName && c.id !== id)) {
+          toast("이미 존재하는 카테고리 이름입니다", "error");
+          input.value = oldName;
+          return;
+        }
+        try {
+          const activeFile = await getFile(ACTIVE_PATH);
+          const activeContent = decodeContent(activeFile.content);
+          const headerRegex = new RegExp(
+            `^## ${escapeRegex(oldName)}\\s*$`,
+            "m",
+          );
+          if (!headerRegex.test(activeContent)) {
+            // active.md에 헤더가 없으면 categories.json만 업데이트하고 경고
+            toast(
+              `active.md에 '${oldName}' 헤더가 없습니다 — categories.json만 갱신`,
+              "info",
+            );
+          }
+          const newActive = activeContent.replace(
+            headerRegex,
+            "## " + newName,
+          );
+
+          const prev = categoriesData;
+          categoriesData = {
+            ...categoriesData,
+            updated_at: new Date().toISOString().slice(0, 10),
+            categories: categoriesData.categories.map((c) =>
+              c.id === id ? { ...c, name: newName } : c,
+            ),
+          };
+
+          // categories.json 먼저, active.md 두 번째 — 부분 실패 시 sync 추적 가능
+          try {
+            await saveCategoriesJson(
+              `[chore] rename category: ${oldName} → ${newName}`,
+            );
+          } catch (err) {
+            categoriesData = prev;
+            throw err;
+          }
+          if (newActive !== activeContent) {
+            try {
+              await updateFile(
+                ACTIVE_PATH,
+                newActive,
+                activeFile.sha,
+                `[chore] rename category: ${oldName} → ${newName}`,
+              );
+            } catch (err) {
+              toast(
+                `categories.json은 갱신됐으나 active.md 저장 실패 — 새로고침 후 수동으로 '## ${oldName}' → '## ${newName}' 변경하세요`,
+                "error",
+              );
+              throw err;
+            }
+          }
+
+          toast(`이름 변경: ${oldName} → ${newName}`, "success");
+          await load();
+          renderCategoryList();
+        } catch (e) {
+          toast("이름 변경 실패: " + e.message, "error");
+          input.value = oldName;
+        }
+      }
+
+      async function deleteCategory(id) {
+        const cat = categoriesData.categories.find((c) => c.id === id);
+        if (!cat) return;
+        if (cat.is_default) {
+          toast("기본 카테고리는 삭제할 수 없습니다", "error");
+          return;
+        }
+        const section = activeData.sections.find((s) => s.title === cat.name);
+        const itemCount = section?.items.length ?? 0;
+        if (itemCount > 0) {
+          alert(
+            `"${cat.name}" 섹션에 미완료 항목 ${itemCount}건이 있습니다.\n` +
+              `삭제하려면 먼저 모든 항목을 다른 섹션으로 이동하거나 완료 처리하세요.`,
+          );
+          return;
+        }
+        if (!confirm(`"${cat.name}" 카테고리를 삭제하시겠습니까?`)) return;
+
+        try {
+          const activeFile = await getFile(ACTIVE_PATH);
+          const activeContent = decodeContent(activeFile.content);
+          // 줄 단위 순회로 빈 섹션 헤더만 정확하게 제거 — 인접 섹션 본문 침범 방지
+          const lines = activeContent.split("\n");
+          const targetHeader = `## ${cat.name}`;
+          const newLines = [];
+          let removed = false;
+          for (let i = 0; i < lines.length; i++) {
+            if (!removed && lines[i].trim() === targetHeader) {
+              // 헤더 라인 제거. 뒤따르는 빈 줄 1개도 같이 제거 (헤더 직후 공백만)
+              if (i + 1 < lines.length && lines[i + 1].trim() === "") {
+                i++;
+              }
+              removed = true;
+              continue;
+            }
+            newLines.push(lines[i]);
+          }
+          const newActive = newLines.join("\n");
+
+          const prev = categoriesData;
+          categoriesData = {
+            ...categoriesData,
+            updated_at: new Date().toISOString().slice(0, 10),
+            categories: categoriesData.categories.filter((c) => c.id !== id),
+          };
+
+          // categories.json 먼저, active.md 두 번째
+          try {
+            await saveCategoriesJson(`[chore] delete category: ${cat.name}`);
+          } catch (err) {
+            categoriesData = prev;
+            throw err;
+          }
+          if (newActive !== activeContent) {
+            try {
+              await updateFile(
+                ACTIVE_PATH,
+                newActive,
+                activeFile.sha,
+                `[chore] delete category: ${cat.name}`,
+              );
+            } catch (err) {
+              toast(
+                `categories.json은 갱신됐으나 active.md 저장 실패 — 새로고침 후 수동으로 '## ${cat.name}' 헤더 라인을 삭제하세요`,
+                "error",
+              );
+              throw err;
+            }
+          }
+
+          toast(`카테고리 삭제: ${cat.name}`, "success");
+          await load();
+          renderCategoryList();
+        } catch (e) {
+          toast("삭제 실패: " + e.message, "error");
+        }
+      }
+
+      function escapeRegex(s) {
+        return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+
+      async function saveCategoriesJson(message) {
+        const content = JSON.stringify(categoriesData, null, 2) + "\n";
+        let sha = null;
+        try {
+          const file = await getFile(CATEGORIES_PATH);
+          sha = file.sha;
+        } catch (e) {
+          // 파일 없음 → 신규 생성
+        }
+        const body = {
+          message,
+          content: btoa(unescape(encodeURIComponent(content))),
+        };
+        if (sha) body.sha = sha;
+        const res = await fetch(API_BASE + CATEGORIES_PATH, {
+          method: "PUT",
+          headers: {
+            Authorization: authHeader(),
+            Accept: "application/vnd.github.v3+json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          if (res.status === 409 || res.status === 422) {
+            throw new Error(
+              "categories.json 충돌 발생 — 새로고침 후 다시 시도하세요 (다른 기기에서 동시 편집했을 수 있음)",
+            );
+          }
+          throw new Error(
+            "categories.json 저장 실패: " + (err.message || res.status),
+          );
+        }
+        return res.json();
+      }
+
       // Read: unauthenticated API (public repo, no token needed)
       // Write: token required (complete/cancel/urgency)
       async function fetchRaw(path) {
@@ -2003,6 +2531,23 @@
         return res.text();
       }
 
+      async function loadCategories() {
+        try {
+          const text = await fetchRaw(CATEGORIES_PATH);
+          const parsed = JSON.parse(text);
+          if (parsed && Array.isArray(parsed.categories)) {
+            categoriesData = parsed;
+          }
+        } catch (e) {
+          // 로딩 실패 시 기존 데이터가 있으면 보존, 없을 때만 빈 상태로 초기화
+          if (!categoriesData || !Array.isArray(categoriesData.categories) || categoriesData.categories.length === 0) {
+            categoriesData = { version: 1, categories: [] };
+          } else {
+            console.warn("categories.json 로딩 실패 — 이전 데이터 유지", e);
+          }
+        }
+      }
+
       async function load() {
         const btn = document.getElementById("refreshBtn");
         btn.classList.add("loading");
@@ -2010,6 +2555,7 @@
           const [activeText, archiveText] = await Promise.all([
             fetchRaw(ACTIVE_PATH),
             fetchRaw(ARCHIVE_PATH),
+            loadCategories(), // 결과는 categoriesData 전역에 저장됨
           ]);
 
           const ap = parseMd(activeText);

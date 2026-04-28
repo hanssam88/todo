@@ -3,13 +3,13 @@
 # Triggered by PostToolUse hook on Write|Edit
 # No stdin parsing — just check if todos have uncommitted changes
 
-TODOS_DIR="/c/Users/SengMin(David)Hyun/Downloads/todos"
+TODOS_DIR="/c/Users/sengmin.hyun/Downloads/David/todos"
 cd "$TODOS_DIR" || exit 0
 
 # Check if todo files have changes
-git diff --quiet todo_active.md todo_archive.md 2>/dev/null && exit 0
+git diff --quiet todo_active.md todo_archive.md categories.json 2>/dev/null && exit 0
 
-git add todo_active.md todo_archive.md 2>/dev/null
+git add todo_active.md todo_archive.md categories.json 2>/dev/null
 git diff --cached --quiet && exit 0
 git commit -m "[동기화] TODO $(date +%Y-%m-%d\ %H:%M)" 2>/dev/null
 git pull --rebase origin main 2>/dev/null
